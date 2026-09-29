@@ -173,7 +173,7 @@ label.casilla input { width: 22px; height: 22px; margin: 1px 0 0; accent-color: 
 .telefonos a:last-child { border-bottom: 0; }
 .telefonos a b { font-family: var(--titulos); font-weight: 400; font-size: 26px; color: var(--amarillo); letter-spacing: 1px; }
 .contacto-botones { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px; }
-.contacto-botones .boton { margin: 0; }
+.contacto-botones .boton { margin: 0; display: flex; align-items: center; justify-content: center; }
 .boton-whatsapp { background: #1fa855; border-color: #000; }
 .boton-instagram { background: linear-gradient(45deg, #f9a825, #e1306c, #833ab4); border-color: #000; }
 .boton-facebook { background: #1877f2; border-color: #000; }
@@ -235,3 +235,22 @@ label.casilla input { width: 22px; height: 22px; margin: 1px 0 0; accent-color: 
 .modal-botones { display: grid; gap: 4px; margin-top: 6px; }
 .toast { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(24px + var(--abajo)); z-index: 3000; background: #fff; color: #000; padding: 10px 16px; border-radius: 22px; font-weight: 700; box-shadow: 0 4px 14px #0008; max-width: 90vw; text-align: center; }
 .leaflet-container { font: inherit; }
+
+/* ------------------------------------------------------------------ Socio */
+.socio-portada { display: block; width: 100%; border-radius: 8px; border: 2px solid var(--rojo); box-shadow: 5px 5px 0 var(--amarillo); margin-bottom: 18px; }
+.socio-titulo { font-family: var(--titulos); font-weight: 400; font-size: 34px; text-transform: uppercase; text-align: center; margin: 6px 0 14px; letter-spacing: 1px; }
+.socio-rutas { display: grid; gap: 26px; margin-bottom: 26px; }
+.ruta-fecha {
+  display: inline-block; margin: 0 0 10px 6px; padding: 6px 16px;
+  background: var(--rojo); color: #fff; border: 2px solid #000; border-radius: 4px;
+  font-family: var(--titulos); font-size: 24px; text-transform: uppercase; letter-spacing: .5px;
+  transform: skewX(-9deg); box-shadow: 4px 4px 0 var(--amarillo);
+}
+.ruta-fecha span { display: inline-block; transform: skewX(9deg); }
+.ruta-cartel { display: block; width: 100%; height: auto; border-radius: 8px; border: 1px solid #333; background: #1a1a1a; }
+.ruta-pasada .ruta-fecha { background: #333; box-shadow: 4px 4px 0 #666; }
+.hazte-socio { text-align: center; }
+.hazte-socio h2 { font-size: 34px; color: var(--amarillo); }
+.hazte-socio .telefonos, .hazte-socio .contacto-botones { text-align: left; margin-top: 12px; }
+.hazte-logo { width: 150px; filter: drop-shadow(0 0 1px #fff); }
+.acceso-error { margin-top: 12px; padding: 10px 12px; border-radius: 6px; background: rgba(227, 6, 11, .15); border: 1px solid var(--rojo); font-size: 15px; }

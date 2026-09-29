@@ -31,7 +31,7 @@ var AJUSTES = {
 // ----------------------------------------------------
 
 var COLS_PART = ['Dorsal', 'Nombre', 'Teléfono', 'Email', 'Alta', 'Sellos', 'Completado', 'Hora completado', 'Aviso enviado', 'Carpeta de fotos'];
-var COLS_INSC = ['Nº', 'Recibida', 'Nombre', 'Apellidos', 'Teléfono', 'Email', 'Localidad', 'Moto', 'Talla', 'Acompañante', 'Nombre acompañante', 'Talla acompañante', 'Importe (€)', 'Pagado', 'Id app'];
+var COLS_INSC = ['Nº', 'Recibida', 'Nombre', 'Apellidos', 'DNI', 'Teléfono', 'Email', 'Localidad', 'Moto', 'Talla', 'Acompañante', 'Nombre acompañante', 'Talla acompañante', 'Importe (€)', 'Pagado', 'Id app'];
 var COLS_SELLO = ['Recibido', 'Dorsal', 'Nombre', 'Orden', 'Punto', 'Hora de la foto', 'Distancia al punto (m)', 'Precisión GPS (m)', 'Sin GPS', 'Simulado (prueba)', 'Foto', 'Ubicación', 'Id punto'];
 
 function doGet() {
@@ -44,6 +44,7 @@ function doPost(e) {
   try {
     var d = JSON.parse(e.postData.contents);
     if (d.accion === 'inscripcion') return responder(inscribir(d));
+    if (d.accion === 'acceso') return responder(acceso(d));
     if (!d.dorsal || !d.nombre) return responder({ ok: false, error: 'Faltan nombre o dorsal' });
     d.dorsal = String(d.dorsal).trim().toUpperCase();
     if (d.accion === 'registro') return responder(registrar(d));
@@ -99,18 +100,21 @@ function inscribir(d) {
   if (!d.nombre || !d.apellidos || !d.telefono) return { ok: false, error: 'Faltan datos' };
   var h = hoja('Inscripciones', COLS_INSC);
   var datos = h.getDataRange().getValues();
-  // Si el móvil reintenta el envío, devolvemos el mismo número
+  var dni = normalizarDni(d.dni);
+  // Si el móvil reintenta el envío, o ese DNI ya estaba inscrito, devolvemos el mismo número
   for (var i = 1; i < datos.length; i++) {
-    if (String(datos[i][14]) === String(d.idLocal)) return { ok: true, numero: datos[i][0], repetido: true };
+    if (String(datos[i][15]) === String(d.idLocal) || (dni && normalizarDni(datos[i][4]) === dni)) {
+      return { ok: true, numero: datos[i][0], repetido: true };
+    }
   }
   var numero = datos.length; // la fila 1 es la cabecera
-  h.appendRow([numero, new Date(), d.nombre, d.apellidos, d.telefono, d.email || '', d.localidad || '', d.moto || '', d.talla || '',
+  h.appendRow([numero, new Date(), d.nombre, d.apellidos, dni, d.telefono, d.email || '', d.localidad || '', d.moto || '', d.talla || '',
     d.conAcompanante ? 'SÍ' : 'NO', d.acompNombre || '', d.acompTalla || '', Number(d.total) || 0, 'NO', d.idLocal || '']);
   if (AJUSTES.AVISAR_INSCRIPCIONES && MailApp.getRemainingDailyQuota() > 5) {
     MailApp.sendEmail({
       to: AJUSTES.CORREO_CLUB,
       subject: '🏍️ Nueva inscripción Nº ' + numero + ': ' + d.nombre + ' ' + d.apellidos,
-      htmlBody: '<p><b>' + limpiar(d.nombre + ' ' + d.apellidos) + '</b> · ' + limpiar(d.telefono) + ' · ' + limpiar(d.email || '-') + '</p>' +
+      htmlBody: '<p><b>' + limpiar(d.nombre + ' ' + d.apellidos) + '</b> · DNI ' + limpiar(dni) + ' · ' + limpiar(d.telefono) + ' · ' + limpiar(d.email || '-') + '</p>' +
         '<p>Moto: ' + limpiar(d.moto || '-') + ' · Talla ' + limpiar(d.talla || '-') +
         (d.conAcompanante ? '<br>Acompañante: ' + limpiar(d.acompNombre) + ' (talla ' + limpiar(d.acompTalla || '-') + ')' : '') + '</p>' +
         '<p>Importe: <b>' + limpiar(d.total) + ' €</b>. Marca "Pagado" en la hoja cuando llegue el pago.</p>',
@@ -118,6 +122,23 @@ function inscribir(d) {
     });
   }
   return { ok: true, numero: numero };
+}
+
+function normalizarDni(t) { return String(t || '').toUpperCase().replace(/[^0-9A-Z]/g, ''); }
+
+/** La app pregunta si un DNI está inscrito antes de dejar entrar en la ruta.
+    Sirve también para inscripciones hechas a mano en la hoja (p. ej. en la KDD):
+    basta con añadir la fila con su Nº y su DNI. */
+function acceso(d) {
+  var dni = normalizarDni(d.dni);
+  if (!dni) return { ok: false, error: 'Falta el DNI' };
+  var datos = hoja('Inscripciones', COLS_INSC).getDataRange().getValues();
+  for (var i = 1; i < datos.length; i++) {
+    if (normalizarDni(datos[i][4]) === dni) {
+      return { ok: true, encontrado: true, numero: datos[i][0] || i, nombre: (datos[i][2] + ' ' + datos[i][3]).trim(), telefono: String(datos[i][5] || '') };
+    }
+  }
+  return { ok: true, encontrado: false };
 }
 
 // ------------------ Drive ------------------

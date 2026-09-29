@@ -8,7 +8,7 @@
 
   var C = window.CONFIG;
   var R = C.ruta;
-  var VERSION_APP = '2.0.0';
+  var VERSION_APP = '2.1.0';
   var CLAVE = 'mcslv_estado_v2';
   var TOTAL = R.puntos.length;
   var LEAFLET_JS = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
@@ -22,6 +22,14 @@
     });
   }
   function euros(n) { return n + ' €'; }
+  /* DNI / NIE: normaliza y comprueba la letra de control */
+  function normalizarDni(t) { return String(t || '').toUpperCase().replace(/[^0-9A-Z]/g, ''); }
+  function dniValido(t) {
+    var d = normalizarDni(t);
+    if (!/^[XYZ]?\d{7,8}[A-Z]$/.test(d)) return false;
+    var num = d.replace(/^X/, '0').replace(/^Y/, '1').replace(/^Z/, '2').slice(0, -1);
+    return 'TRWAGMYFPDXBNJZSQVHLCKE'.charAt(parseInt(num, 10) % 23) === d.slice(-1);
+  }
   function telBonito(t) { return String(t).replace(/(\d{3})(\d{3})(\d{3})/, '$1 $2 $3'); }
 
   /* ------------------------------------------------------------------
@@ -131,6 +139,7 @@
     ruta: { titulo: 'Ruta', padre: 'raid' },
     evento: { titulo: 'Información del evento', padre: 'raid' },
     club: { titulo: 'El club', padre: 'inicio' },
+    socio: { titulo: 'Socio', padre: 'inicio' },
     contacto: { titulo: 'Contacto', padre: 'inicio' }
   };
   var actual = 'inicio';
@@ -158,6 +167,7 @@
     if (actual === 'ruta') pintarRuta();
     if (actual === 'evento') pintarEvento();
     if (actual === 'club') pintarClub();
+    if (actual === 'socio') pintarSocio();
     if (actual === 'contacto') pintarContacto();
   }
 
@@ -200,6 +210,10 @@
     $('#ev-salida').textContent = E.lugarSalida;
     $('#ev-llegada').textContent = E.lugarFinal;
     $('#ev-avisos').innerHTML = E.avisos.map(function (t) { return '<li>' + esc(t) + '</li>'; }).join('');
+    $('#ev-bloque-sorteo').hidden = !E.sorteo;
+    $('#ev-sorteo').textContent = E.sorteo || '';
+    $('#ev-bloque-video').hidden = !E.video;
+    $('#ev-video').href = E.video || '#';
     $('#ev-bloque-alojamiento').hidden = !E.alojamiento;
     $('#ev-alojamiento').href = E.alojamiento || '#';
     $('#ev-bloque-patrocinadores').hidden = !(E.patrocinadores && E.patrocinadores.length);
@@ -219,17 +233,36 @@
       return '<a href="tel:+34' + esc(t.numero) + '"><span>' + esc(t.nombre) + '</span><b>' + esc(telBonito(t.numero)) + '</b></a>';
     }).join('');
   }
-  function pintarContacto() {
+  function htmlBotonesContacto() {
     var K = C.contacto;
-    $('#ct-telefonos').innerHTML = htmlTelefonos();
     var b = [];
     if (K.whatsapp) b.push('<a class="boton boton-whatsapp" target="_blank" rel="noopener" href="https://wa.me/34' + esc(K.whatsapp) + '">WhatsApp</a>');
     if (K.instagram) b.push('<a class="boton boton-instagram" target="_blank" rel="noopener" href="https://www.instagram.com/' + esc(K.instagram) + '/">Instagram</a>');
     if (K.facebook) b.push('<a class="boton boton-facebook" target="_blank" rel="noopener" href="' + esc(K.facebook) + '">Facebook</a>');
     if (K.email) b.push('<a class="boton" href="mailto:' + esc(K.email) + '">Correo</a>');
     if (K.mapa) b.push('<a class="boton" target="_blank" rel="noopener" href="' + esc(K.mapa) + '">Cómo llegar</a>');
-    $('#ct-botones').innerHTML = b.join('');
+    return b.join('');
+  }
+  function pintarContacto() {
+    $('#ct-telefonos').innerHTML = htmlTelefonos();
+    $('#ct-botones').innerHTML = htmlBotonesContacto();
     $('#ct-bloque-instalar').hidden = esApp();
+  }
+  function pintarSocio() {
+    var S = C.socio;
+    $('#socio-portada').src = S.portada;
+    $('#socio-portada').hidden = !S.portada;
+    $('#socio-titulo').textContent = S.tituloRutas;
+    var cont = $('#socio-rutas');
+    if (!cont.childElementCount) {
+      cont.innerHTML = S.rutas.map(function (r) {
+        return '<article class="ruta-socio"><div class="ruta-fecha"><span>' + esc(r.fecha) + '</span></div>' +
+          '<img class="ruta-cartel" loading="lazy" decoding="async"' + (r.ancho ? ' width="' + r.ancho + '" height="' + r.alto + '"' : '') + ' src="' + esc(r.cartel) + '" alt="' + esc(r.nombre || ('Ruta del ' + r.fecha)) + '"></article>';
+      }).join('');
+    }
+    $('#socio-texto').innerHTML = S.hazteSocio.map(function (p) { return '<p>' + esc(p) + '</p>'; }).join('');
+    $('#socio-telefonos').innerHTML = htmlTelefonos();
+    $('#socio-botones').innerHTML = htmlBotonesContacto();
   }
   function esApp() { return window.matchMedia('(display-mode: standalone)').matches || navigator.standalone === true; }
 
@@ -297,11 +330,15 @@
   function enviarInscripcion(ev) {
     ev.preventDefault();
     var f = ev.target;
+    if (!dniValido(f.dni.value)) { toast('El DNI/NIE no es correcto. Revisa números y letra.'); f.dni.focus(); return; }
+    var dniN = normalizarDni(f.dni.value);
+    if (estado.inscripciones.some(function (x) { return x.dni === dniN; })) { toast('Ese DNI ya está inscrito desde este móvil'); return; }
     var ins = {
       id: 'I' + Date.now(),
       fecha: new Date().toISOString(),
       nombre: f.nombre.value.trim(),
       apellidos: f.apellidos.value.trim(),
+      dni: dniN,
       telefono: f.telefono.value.trim(),
       email: f.email.value.trim(),
       localidad: f.localidad.value.trim(),
@@ -560,7 +597,7 @@
     ['mapa', 'carnet', 'ayuda'].forEach(function (t) { $('#t-' + t).hidden = !reg || pestana !== t; });
     if (!reg) {
       var ins = ultimaInscripcion(), f = $('#form-ruta');
-      if (ins && !f.nombre.value) { f.nombre.value = ins.nombre + ' ' + ins.apellidos; f.telefono.value = ins.telefono; }
+      if (ins && !f.dni.value) f.dni.value = ins.dni || '';
       return;
     }
     if (pestana === 'mapa') {
@@ -580,7 +617,7 @@
   }
   function pintarCarnet() {
     var p = estado.participante, n = numSellos();
-    $('#carnet-nombre').textContent = p.nombre + ' · Dorsal ' + p.dorsal;
+    $('#carnet-nombre').textContent = p.nombre + ' · Nº ' + p.dorsal;
     $('#progreso-valor').style.width = (n / TOTAL * 100) + '%';
     $('#progreso-texto').textContent = n + ' de ' + TOTAL + ' sellos';
     $('#enhorabuena').hidden = !completado();
@@ -599,13 +636,46 @@
       if (s) fotos.leer(pt.id).then(function (u) { if (u) div.querySelector('.sello-foto').style.backgroundImage = 'url("' + u + '")'; });
     });
   }
-  function registrarRuta(ev) {
-    ev.preventDefault();
-    var f = ev.target;
-    estado.participante = { nombre: f.nombre.value.trim().replace(/\s+/g, ' '), dorsal: f.dorsal.value.trim().toUpperCase(), telefono: f.telefono.value.trim(), alta: new Date().toISOString() };
+  /* Acceso a la ruta con el DNI de la inscripción */
+  function errorAcceso(html) { var e = $('#acceso-error'); e.innerHTML = html; e.hidden = !html; }
+  function entrarRuta(datos) {
+    estado.participante = { nombre: datos.nombre, dorsal: String(datos.dorsal), dni: datos.dni, telefono: datos.telefono || '', alta: new Date().toISOString() };
     estado.cola.push({ tipo: 'registro' });
-    guardar(); pestana = 'mapa'; pintarRuta(); procesarCola();
-    toast('¡Bienvenido al desafío!');
+    guardar(); errorAcceso(''); pestana = 'mapa'; pintarRuta(); procesarCola();
+    toast('¡Bienvenido al desafío, ' + datos.nombre.split(' ')[0] + '!');
+  }
+  function accesoRuta(ev) {
+    ev.preventDefault();
+    var dni = normalizarDni(ev.target.dni.value);
+    errorAcceso('');
+    if (!dniValido(dni)) { errorAcceso('El DNI/NIE no es correcto. Revisa los números y la letra.'); return; }
+    // 1) Inscrito desde este mismo móvil
+    var local = estado.inscripciones.filter(function (x) { return x.dni === dni; })[0];
+    if (local) {
+      entrarRuta({ nombre: local.nombre + ' ' + local.apellidos, dorsal: local.numero || 'P-' + dni.slice(-4), dni: dni, telefono: local.telefono });
+      return;
+    }
+    // 2) Sin servidor todavía: solo se puede probar en modo prueba
+    if (!C.urlServidor) {
+      if (C.modoPrueba) { entrarRuta({ nombre: 'Participante de prueba', dorsal: 'PRUEBA', dni: dni }); toast('Modo prueba: acceso sin comprobar'); return; }
+      errorAcceso('No se puede comprobar la inscripción ahora mismo. Contacta con la organización.');
+      return;
+    }
+    if (!navigator.onLine) { errorAcceso('Necesitas conexión a internet para comprobar tu inscripción la primera vez.'); return; }
+    // 3) Comprobación en la lista de inscritos del club
+    var b = $('#boton-acceso'); b.disabled = true; b.textContent = 'Comprobando…';
+    fetch(C.urlServidor, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ accion: 'acceso', dni: dni }) })
+      .then(function (r) { return r.json(); })
+      .then(function (res) {
+        if (!res || !res.ok) throw new Error((res && res.error) || 'Error');
+        if (!res.encontrado) {
+          errorAcceso('Este DNI no aparece en las inscripciones del Raid. Si te acabas de inscribir espera un momento; si no, <b>inscríbete</b> primero o contacta con el club.');
+          return;
+        }
+        entrarRuta({ nombre: res.nombre, dorsal: res.numero, dni: dni, telefono: res.telefono });
+      })
+      .catch(function () { errorAcceso('No se ha podido comprobar ahora mismo. Inténtalo de nuevo en unos segundos.'); })
+      .then(function () { b.disabled = false; b.textContent = 'Entrar'; });
   }
 
   /* Mapa sin conexión */
@@ -677,7 +747,7 @@
       return Promise.resolve(d);
     }
     var p = estado.participante || {};
-    var base = { accion: item.tipo, nombre: p.nombre, dorsal: p.dorsal, telefono: p.telefono || '', evento: C.evento.nombre, total: TOTAL };
+    var base = { accion: item.tipo, nombre: p.nombre, dorsal: p.dorsal, dni: p.dni || '', telefono: p.telefono || '', evento: C.evento.nombre, total: TOTAL };
     if (item.tipo === 'registro') return Promise.resolve(base);
     var idx = -1; R.puntos.forEach(function (pt, k) { if (pt.id === item.id) idx = k; });
     var s = estado.sellos[item.id];
@@ -746,7 +816,7 @@
     $('#con-acompanante').addEventListener('change', actualizarTotal);
     $('#boton-nueva-inscripcion').addEventListener('click', function () { mostrarFormulario = true; pintarInscripcion(); window.scrollTo(0, 0); });
 
-    $('#form-ruta').addEventListener('submit', registrarRuta);
+    $('#form-ruta').addEventListener('submit', accesoRuta);
     $('#boton-sellar').addEventListener('click', pulsarSellar);
     $('#boton-sin-gps').addEventListener('click', pulsarSinGps);
     $('#boton-simular').addEventListener('click', pulsarSimular);

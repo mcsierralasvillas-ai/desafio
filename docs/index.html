@@ -44,6 +44,10 @@
         <button class="boton-menu" data-ir="club">
           <span class="boton-menu-texto">INFORMACIÓN DEL CLUB</span>
         </button>
+        <button class="boton-menu" data-ir="socio">
+          <span class="boton-menu-texto">SOCIO</span>
+          <span class="boton-menu-sub">Rutas 2026 · Hazte socio</span>
+        </button>
         <button class="boton-menu" data-ir="contacto">
           <span class="boton-menu-texto">CONTACTO</span>
         </button>
@@ -91,6 +95,7 @@
         <h3 class="seccion">Piloto</h3>
         <label>Nombre<input name="nombre" required autocomplete="given-name"></label>
         <label>Apellidos<input name="apellidos" required autocomplete="family-name"></label>
+        <label>DNI / NIE <span class="suave">(lo necesitarás para entrar en la ruta)</span><input name="dni" required autocapitalize="characters" autocomplete="off" placeholder="12345678Z"></label>
         <label>Teléfono<input name="telefono" type="tel" required inputmode="tel" autocomplete="tel"></label>
         <label>Correo electrónico<input name="email" type="email" required autocomplete="email"></label>
         <label>Localidad<input name="localidad" autocomplete="address-level2"></label>
@@ -141,12 +146,12 @@
 
       <!-- Registro para la ruta -->
       <form id="form-ruta" class="tarjeta" hidden>
-        <h2>Participante</h2>
-        <p class="suave">Tus datos para el carnet de sellado. El número de dorsal viene en el pack de bienvenida.</p>
-        <label>Nombre y apellidos<input name="nombre" required minlength="3" autocomplete="name"></label>
-        <label>Número de dorsal<input name="dorsal" required inputmode="numeric" pattern="[0-9A-Za-z]{1,8}"></label>
-        <label>Teléfono<input name="telefono" type="tel" inputmode="tel" autocomplete="tel"></label>
-        <button class="boton boton-principal" type="submit">Empezar el desafío</button>
+        <h2>Acceso a la ruta</h2>
+        <p class="suave">Solo pueden entrar los participantes inscritos. Escribe el DNI o NIE con el que te inscribiste.</p>
+        <label>DNI / NIE<input name="dni" required autocapitalize="characters" autocomplete="off" placeholder="12345678Z"></label>
+        <button class="boton boton-principal" type="submit" id="boton-acceso">Entrar</button>
+        <div id="acceso-error" class="acceso-error" hidden></div>
+        <button class="enlace" type="button" data-ir="inscripcion">¿Aún no estás inscrito? Inscríbete aquí</button>
       </form>
 
       <!-- Pestaña Ruta -->
@@ -259,6 +264,15 @@
         <h3>A tener en cuenta</h3>
         <ul id="ev-avisos" class="lista"></ul>
       </div>
+      <div class="tarjeta" id="ev-bloque-sorteo">
+        <h3>Sorteo</h3>
+        <p id="ev-sorteo"></p>
+      </div>
+      <div class="tarjeta" id="ev-bloque-video">
+        <h3>Conoce la sierra</h3>
+        <p class="suave">Sierra de Cazorla, Segura y Las Villas: el escenario del Raid.</p>
+        <a class="boton" id="ev-video" target="_blank" rel="noopener">▶ Ver vídeo</a>
+      </div>
       <div class="tarjeta" id="ev-bloque-alojamiento">
         <h3>Alojamiento</h3>
         <p class="suave">Si vienes de fuera, aquí tienes alojamientos en Villacarrillo y alrededores.</p>
@@ -282,6 +296,20 @@
         <div id="club-actividades" class="actividades"></div>
       </div>
       <button class="boton boton-principal" data-ir="contacto">Contactar con el club</button>
+    </section>
+
+    <!-- ================= SOCIO ================= -->
+    <section class="pantalla" id="p-socio" hidden>
+      <img id="socio-portada" class="socio-portada" alt="Rutas 2026 del Motorclub Sierra Las Villas">
+      <h2 class="socio-titulo" id="socio-titulo"></h2>
+      <div id="socio-rutas" class="socio-rutas"></div>
+      <div class="tarjeta tarjeta-destacada hazte-socio">
+        <img src="icons/logo.png" alt="" class="hazte-logo">
+        <h2>Hazte socio</h2>
+        <div id="socio-texto"></div>
+        <div id="socio-telefonos" class="telefonos"></div>
+        <div class="contacto-botones" id="socio-botones"></div>
+      </div>
     </section>
 
     <!-- ================= CONTACTO ================= -->

@@ -22,8 +22,35 @@ window.CONFIG = {
     // Eventos y actividades que organiza el club
     actividades: [
       { nombre: 'Motor Raid Sierra Las Villas', texto: 'Nuestra ruta sorpresa por la sierra con carnet de sellado. Edición 2026: 8 y 9 de mayo.' },
-      { nombre: 'Rutas del club', texto: 'COMPLETAR: salidas habituales de los socios.' },
-      { nombre: 'Papanoelada motera', texto: 'COMPLETAR: descripción del evento.' }
+      { nombre: 'Rutas del club', texto: 'Una o dos salidas al mes: El Lince, Mar y Montaña, Velefique, Caravaca, Sierra Nevada, The Silent Route, la Alpujarra… (ver apartado Socio).' },
+      { nombre: 'Rutas nocturnas', texto: 'En verano, por la Sierra de Cazorla, Segura y Las Villas y por el Condado.' },
+      { nombre: 'Papanoelada motera', texto: 'En diciembre en Villacarrillo: stunt, paseo tradicional, premio a la moto más navideña, música y barra.' }
+    ]
+  },
+
+  // ------------------------------------------------------------------ SOCIO
+  socio: {
+    portada: 'rutas/portada-rutas-2026.jpg',
+    tituloRutas: 'Rutas 2026',
+    // Cada ruta: fecha (texto que sale encima) + cartel. Para añadir una,
+    // copia una línea y pon la imagen en la carpeta "rutas".
+    rutas: [
+      { fecha: '14 y 15 de febrero', cartel: 'rutas/2026-02-el-lince.jpg', nombre: 'El Lince · concentración motera invernal', ancho: 900, alto: 1125 },
+      { fecha: '28 y 29 de marzo', cartel: 'rutas/2026-03-mar-y-montana.jpg', nombre: 'Ruta motera Mar y Montaña', ancho: 900, alto: 1297 },
+      { fecha: '12 de abril', cartel: 'rutas/2026-04-velefique.jpg', nombre: 'Ruta a Velefique', ancho: 863, alto: 1400 },
+      { fecha: '8, 9 y 10 de mayo', cartel: 'rutas/2026-05-motor-raid.jpg', nombre: 'Motor Raid Sierra Las Villas', ancho: 900, alto: 1273 },
+      { fecha: '31 de mayo', cartel: 'rutas/2026-05-convivencia.jpg', nombre: 'Jornada de convivencia', ancho: 900, alto: 1157 },
+      { fecha: '14 de junio', cartel: 'rutas/2026-06-caravaca.jpg', nombre: 'Ruta a Caravaca de la Cruz', ancho: 900, alto: 1125 },
+      { fecha: '17 de julio', cartel: 'rutas/2026-07-nocturna-cazorla.jpg', nombre: 'Ruta nocturna por la Sierra de Cazorla', ancho: 900, alto: 1261 },
+      { fecha: '8 de agosto', cartel: 'rutas/2026-08-nocturna-condado.jpg', nombre: 'Ruta nocturna por el Condado', ancho: 900, alto: 1273 },
+      { fecha: '26 de septiembre', cartel: 'rutas/2026-09-sierra-nevada.jpg', nombre: 'Ruta a Sierra Nevada', ancho: 900, alto: 1273 },
+      { fecha: '10, 11 y 12 de octubre', cartel: 'rutas/2026-10-silent-route.jpg', nombre: 'The Silent Route', ancho: 900, alto: 1317 },
+      { fecha: '8 de noviembre', cartel: 'rutas/2026-11-alpujarra.jpg', nombre: 'Ruta a la Alpujarra', ancho: 900, alto: 1248 },
+      { fecha: '12 de diciembre', cartel: 'rutas/2026-12-papanoelada.jpg', nombre: 'Papanoelada VIII', ancho: 900, alto: 1320 }
+    ],
+    hazteSocio: [
+      'Rueda con nosotros todo el año: rutas por Andalucía y más allá, rutas nocturnas, viajes de varios días, la jornada de convivencia con comida para los socios y el Motor Raid.',
+      'Si quieres formar parte del Motorclub Sierra Las Villas, escríbenos o llámanos y te contamos cómo hacerte socio.'
     ]
   },
 
@@ -34,7 +61,7 @@ window.CONFIG = {
       { nombre: 'Contacto 2', numero: '630874922' }
     ],
     whatsapp: '600373448',
-    email: '',                      // COMPLETAR: correo del club
+    email: 'mcsierralasvillas@gmail.com',
     instagram: 'mcsierralasvillas',
     facebook: '',                   // COMPLETAR: dirección completa de la página de Facebook
     direccion: 'Villacarrillo (Jaén)',
@@ -60,10 +87,13 @@ window.CONFIG = {
     avisos: [
       'Plazas limitadas: tienen prioridad las inscripciones hechas en la app.',
       'Respeta las normas de tráfico y las indicaciones de la organización. No es una carrera.',
-      'Descarga el mapa en la app antes de salir: hay zonas sin cobertura.'
+      'Descarga el mapa en la app antes de salir: hay zonas sin cobertura.',
+      'Para ver la ruta en la app necesitas estar inscrito: se entra con tu DNI.'
     ],
     alojamiento: 'https://drive.google.com/file/d/1zj3bdQRfXXiJfaPYlIVhl2DhWXRX_xnT/view?usp=sharing',
-    patrocinadores: ['Paradise Motos (Jaén)', 'Yamaha Xauen Motor']   // REVISAR para 2027
+    patrocinadores: ['Paradise Motos (Jaén)', 'Yamaha Xauen Motor'],  // REVISAR para 2027
+    sorteo: 'Durante la KDD del viernes habrá sorteo de premios de nuestros patrocinadores. Cada inscrito recibe una papeleta y se pueden comprar más allí mismo.',
+    video: 'https://www.youtube.com/watch?v=wcieWYd9Jk4'   // "Conoce la Sierra de Cazorla, Segura y Las Villas"
   },
 
   // ----------------------------------------------------------- INSCRIPCIÓN
