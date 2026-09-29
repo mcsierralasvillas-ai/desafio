@@ -22,7 +22,7 @@
 <body>
 <header><h1>Generar el trazado de la ruta por carretera</h1></header>
 <div class="caja">
-  <p>Esta herramienta lee los puntos de <code>js/config.js</code>, calcula el recorrido por carretera de cada tramo
+  <p>Esta herramienta lee los puntos de <code>js/config.js</code> (apartado ruta), calcula el recorrido por carretera de cada tramo
   y genera el archivo <code>ruta-trazado.json</code> que usa la app para dibujar la ruta.</p>
   <p>1. Pulsa <b>Calcular ruta</b> (necesita internet). &nbsp; 2. Revisa en el mapa que va por las carreteras que queréis.
   &nbsp; 3. Pulsa <b>Descargar</b> y pon el archivo en la carpeta principal de la app (junto a <code>index.html</code>).</p>
@@ -36,7 +36,7 @@
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="../js/config.js"></script>
 <script>
-  var C = window.CONFIG;
+  var C = window.CONFIG.ruta;
   var paradas = [C.salida].concat(C.puntos, [C.llegada]);
   var mapa = L.map('mapa').setView([C.salida.lat, C.salida.lng], 9);
   L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 18, attribution: '&copy; OpenStreetMap' }).addTo(mapa);

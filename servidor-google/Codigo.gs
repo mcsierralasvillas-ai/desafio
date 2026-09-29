@@ -1,8 +1,10 @@
 /* =========================================================================
-   SERVIDOR DEL DESAFÍO DE LAS PRESAS  (Google Apps Script, gratis)
-   Motorclub Sierra Las Villas
+   SERVIDOR DE LA APP DEL MOTORCLUB SIERRA LAS VILLAS (Google Apps Script)
+   Inscripciones del Raid + sellos del Desafío de las Presas
    -------------------------------------------------------------------------
    Qué hace:
+     - Recibe las inscripciones al Raid, les da un número y las apunta en la
+       hoja "Inscripciones" (y avisa al club por correo si AVISAR_INSCRIPCIONES).
      - Recibe el registro de cada participante y lo apunta en la hoja
        "Participantes".
      - Recibe cada sello (foto + hora + posición), guarda la foto en Google
@@ -22,11 +24,14 @@ var AJUSTES = {
   ADJUNTAR_FOTOS: true,
   // Enviar también un correo de enhorabuena al participante (si dejó email).
   // Ojo: una cuenta Gmail normal puede enviar unos 100 correos al día.
-  CORREO_AL_PARTICIPANTE: false
+  CORREO_AL_PARTICIPANTE: false,
+  // Avisar al club por correo de cada inscripción nueva
+  AVISAR_INSCRIPCIONES: true
 };
 // ----------------------------------------------------
 
 var COLS_PART = ['Dorsal', 'Nombre', 'Teléfono', 'Email', 'Alta', 'Sellos', 'Completado', 'Hora completado', 'Aviso enviado', 'Carpeta de fotos'];
+var COLS_INSC = ['Nº', 'Recibida', 'Nombre', 'Apellidos', 'Teléfono', 'Email', 'Localidad', 'Moto', 'Talla', 'Acompañante', 'Nombre acompañante', 'Talla acompañante', 'Importe (€)', 'Pagado', 'Id app'];
 var COLS_SELLO = ['Recibido', 'Dorsal', 'Nombre', 'Orden', 'Punto', 'Hora de la foto', 'Distancia al punto (m)', 'Precisión GPS (m)', 'Sin GPS', 'Simulado (prueba)', 'Foto', 'Ubicación', 'Id punto'];
 
 function doGet() {
@@ -38,6 +43,7 @@ function doPost(e) {
   cerrojo.waitLock(30000); // evita que dos envíos a la vez se pisen
   try {
     var d = JSON.parse(e.postData.contents);
+    if (d.accion === 'inscripcion') return responder(inscribir(d));
     if (!d.dorsal || !d.nombre) return responder({ ok: false, error: 'Faltan nombre o dorsal' });
     d.dorsal = String(d.dorsal).trim().toUpperCase();
     if (d.accion === 'registro') return responder(registrar(d));
@@ -86,6 +92,32 @@ function registrar(d) {
     p.hoja.appendRow(valores.concat([0, '', '', '', '']));
   }
   return { ok: true };
+}
+
+// ------------------ Inscripciones ------------------
+function inscribir(d) {
+  if (!d.nombre || !d.apellidos || !d.telefono) return { ok: false, error: 'Faltan datos' };
+  var h = hoja('Inscripciones', COLS_INSC);
+  var datos = h.getDataRange().getValues();
+  // Si el móvil reintenta el envío, devolvemos el mismo número
+  for (var i = 1; i < datos.length; i++) {
+    if (String(datos[i][14]) === String(d.idLocal)) return { ok: true, numero: datos[i][0], repetido: true };
+  }
+  var numero = datos.length; // la fila 1 es la cabecera
+  h.appendRow([numero, new Date(), d.nombre, d.apellidos, d.telefono, d.email || '', d.localidad || '', d.moto || '', d.talla || '',
+    d.conAcompanante ? 'SÍ' : 'NO', d.acompNombre || '', d.acompTalla || '', Number(d.total) || 0, 'NO', d.idLocal || '']);
+  if (AJUSTES.AVISAR_INSCRIPCIONES && MailApp.getRemainingDailyQuota() > 5) {
+    MailApp.sendEmail({
+      to: AJUSTES.CORREO_CLUB,
+      subject: '🏍️ Nueva inscripción Nº ' + numero + ': ' + d.nombre + ' ' + d.apellidos,
+      htmlBody: '<p><b>' + limpiar(d.nombre + ' ' + d.apellidos) + '</b> · ' + limpiar(d.telefono) + ' · ' + limpiar(d.email || '-') + '</p>' +
+        '<p>Moto: ' + limpiar(d.moto || '-') + ' · Talla ' + limpiar(d.talla || '-') +
+        (d.conAcompanante ? '<br>Acompañante: ' + limpiar(d.acompNombre) + ' (talla ' + limpiar(d.acompTalla || '-') + ')' : '') + '</p>' +
+        '<p>Importe: <b>' + limpiar(d.total) + ' €</b>. Marca "Pagado" en la hoja cuando llegue el pago.</p>',
+      name: 'App Motorclub Sierra Las Villas'
+    });
+  }
+  return { ok: true, numero: numero };
 }
 
 // ------------------ Drive ------------------
@@ -197,6 +229,7 @@ function limpiar(t) {
 
 /** Ejecuta esta función UNA VEZ desde el editor para dar permisos y crear las hojas. */
 function probarServidor() {
+  hoja('Inscripciones', COLS_INSC);
   hoja('Participantes', COLS_PART);
   hoja('Sellos', COLS_SELLO);
   carpeta(null, AJUSTES.CARPETA_FOTOS);

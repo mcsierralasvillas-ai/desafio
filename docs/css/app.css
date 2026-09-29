@@ -1,170 +1,237 @@
+/* ==========================================================================
+   Motorclub Sierra Las Villas · diseño basado en el logo
+   Rojo, amarillo, negro y blanco · letra condensada e inclinada
+   ========================================================================== */
 :root {
-  --rojo: #d7261e;
-  --rojo-osc: #a51a14;
-  --amarillo: #ffc400;
-  --fondo: #0f0f10;
-  --tarjeta: #1b1b1d;
-  --borde: #2c2c30;
-  --texto: #f3f3f3;
-  --suave: #a3a3aa;
+  --rojo: #e3060b;
+  --rojo-osc: #9e0306;
+  --amarillo: #ffd400;
+  --negro: #0b0b0b;
+  --gris: #161616;
+  --gris-2: #222;
+  --borde: #2f2f2f;
+  --blanco: #ffffff;
+  --suave: #b3b3b3;
   --verde: #2fb56a;
-  --menu-alto: 64px;
-  --seguro-abajo: env(safe-area-inset-bottom, 0px);
-  --seguro-arriba: env(safe-area-inset-top, 0px);
+  --titulos: 'Anton', 'Barlow Condensed', 'Arial Narrow', Impact, sans-serif;
+  --condensada: 'Barlow Condensed', 'Arial Narrow', sans-serif;
+  --texto: 'Barlow', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --arriba: env(safe-area-inset-top, 0px);
+  --abajo: env(safe-area-inset-bottom, 0px);
 }
 
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-html, body { margin: 0; height: 100%; }
-body {
-  background: var(--fondo);
-  color: var(--texto);
-  font: 16px/1.45 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  display: flex; flex-direction: column;
-  overscroll-behavior: none;
-}
 [hidden] { display: none !important; }
-
-/* ---------- Cabecera ---------- */
-.cabecera {
-  display: flex; align-items: center; gap: 10px;
-  padding: calc(8px + var(--seguro-arriba)) 16px 8px;
-  background: linear-gradient(90deg, #000 0%, #1a0605 100%);
-  border-bottom: 3px solid var(--rojo);
+html, body { margin: 0; min-height: 100%; }
+body {
+  background: var(--negro);
+  color: var(--blanco);
+  font: 16px/1.5 var(--texto);
+  overscroll-behavior-y: none;
 }
-.cabecera-logo { width: 38px; height: 38px; border-radius: 9px; }
-.cabecera-titulo { font-weight: 800; font-size: 17px; letter-spacing: .3px; }
-.cabecera-sub { font-size: 12px; color: var(--amarillo); }
-.cabecera-estado { margin-left: auto; width: 12px; height: 12px; border-radius: 50%; background: var(--verde); }
-.cabecera-estado.sin-red { background: #777; }
-.aviso-prueba { background: var(--amarillo); color: #000; text-align: center; font-weight: 700; font-size: 12px; padding: 3px; }
-
-main { flex: 1; overflow-y: auto; padding-bottom: calc(var(--menu-alto) + var(--seguro-abajo) + 12px); }
-.pantalla { padding: 14px 16px; max-width: 640px; margin: 0 auto; }
-.pantalla-mapa { padding: 0; max-width: none; height: 100%; position: relative; }
-
-/* ---------- Tarjetas y botones ---------- */
-.tarjeta {
-  background: var(--tarjeta); border: 1px solid var(--borde);
-  border-radius: 16px; padding: 16px; margin-bottom: 14px;
+body::before { /* franjas de velocidad del fondo */
+  content: ""; position: fixed; inset: 0; z-index: -1; pointer-events: none;
+  background:
+    linear-gradient(115deg, transparent 0 62%, rgba(227, 6, 11, .16) 62% 70%, transparent 70% 73%, rgba(255, 212, 0, .10) 73% 76%, transparent 76%),
+    radial-gradient(ellipse at 50% -10%, rgba(227, 6, 11, .35), transparent 60%),
+    var(--negro);
 }
-.tarjeta h2, .tarjeta h3 { margin: 0 0 8px; }
-.tarjeta h3 { font-size: 16px; }
-.centrado { text-align: center; margin: 16px; }
+main { padding-bottom: calc(24px + var(--abajo)); }
+.pantalla { max-width: 640px; margin: 0 auto; padding: 16px; }
+
+/* ---------------------------------------------------------------- Barra */
+.barra {
+  position: sticky; top: 0; z-index: 900;
+  display: grid; grid-template-columns: 48px 1fr 64px; align-items: center; gap: 8px;
+  padding: calc(6px + var(--arriba)) 12px 6px;
+  background: rgba(8, 8, 8, .94);
+  border-bottom: 4px solid var(--rojo);
+  box-shadow: 0 3px 0 var(--amarillo);
+  backdrop-filter: blur(6px);
+}
+.barra-atras {
+  width: 44px; height: 44px; border: 0; border-radius: 50%;
+  background: var(--rojo); color: #fff; font-size: 34px; line-height: 1; padding-bottom: 4px; cursor: pointer;
+}
+.barra-titulo {
+  font-family: var(--titulos); font-size: 22px; letter-spacing: .5px; text-transform: uppercase;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-align: center;
+}
+.barra-logo { width: 64px; height: auto; justify-self: end; cursor: pointer; filter: drop-shadow(0 0 1px #fff); }
+.aviso-prueba { background: var(--amarillo); color: #000; text-align: center; font: 700 12px/1.8 var(--condensada); letter-spacing: 1px; text-transform: uppercase; }
+
+/* -------------------------------------------------------------- Inicio */
+.pantalla-inicio { min-height: 100vh; min-height: 100dvh; display: flex; flex-direction: column; justify-content: center; padding-top: calc(20px + var(--arriba)); }
+.inicio-logo-caja { text-align: center; margin: 8px 0 4px; }
+.inicio-logo {
+  width: min(88vw, 420px); height: auto;
+  filter: drop-shadow(0 0 2px #fff) drop-shadow(0 10px 30px rgba(227, 6, 11, .55));
+  animation: entrada .7s ease-out both;
+}
+@keyframes entrada { from { opacity: 0; transform: translateY(-14px) scale(.96); } to { opacity: 1; transform: none; } }
+.lema {
+  text-align: center; font: italic 700 19px/1.2 var(--condensada); color: var(--amarillo);
+  text-transform: uppercase; letter-spacing: .5px; margin: 6px 0 22px;
+}
+.pie { text-align: center; color: #777; font-size: 12px; margin-top: 18px; }
+
+/* ------------------------------------------------------- Botones de menú */
+.menu-grande { display: grid; gap: 16px; }
+.boton-menu {
+  position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center;
+  min-height: 84px; padding: 14px 18px; cursor: pointer;
+  border: 3px solid #000; border-radius: 6px;
+  background: linear-gradient(180deg, #ff1a1f 0%, var(--rojo) 55%, var(--rojo-osc) 100%);
+  color: #fff; transform: skewX(-9deg);
+  box-shadow: 6px 6px 0 var(--amarillo), 0 0 0 2px #fff inset;
+  transition: transform .08s, box-shadow .08s;
+}
+.boton-menu > * { transform: skewX(9deg); }
+.boton-menu:active { transform: skewX(-9deg) translate(4px, 4px); box-shadow: 2px 2px 0 var(--amarillo), 0 0 0 2px #fff inset; }
+.boton-menu-texto {
+  font-family: var(--titulos); font-size: 30px; line-height: 1; letter-spacing: 1px;
+  text-shadow: 3px 3px 0 #000; text-align: center;
+}
+.boton-menu-sub { font: italic 700 15px/1.2 var(--condensada); color: var(--amarillo); text-shadow: 1px 1px 0 #000; margin-top: 6px; text-transform: uppercase; letter-spacing: .5px; }
+.boton-menu-raid { background: linear-gradient(180deg, #232323 0%, #0e0e0e 100%); border-color: var(--rojo); box-shadow: 6px 6px 0 var(--rojo), 0 0 0 2px var(--amarillo) inset; }
+.boton-menu-raid:active { box-shadow: 2px 2px 0 var(--rojo), 0 0 0 2px var(--amarillo) inset; }
+.boton-menu-raid .boton-menu-texto { color: var(--amarillo); }
+.boton-menu-raid .boton-menu-sub { color: #fff; }
+
+/* ---------------------------------------------------------- Raid 2027 */
+.raid-cabecera { text-align: center; margin: 4px 0 20px; }
+.raid-logo { width: min(60vw, 260px); filter: drop-shadow(0 0 1px #fff) drop-shadow(0 6px 18px rgba(227, 6, 11, .5)); }
+.raid-nombre { font-family: var(--titulos); font-size: 26px; line-height: 1.1; text-transform: uppercase; margin-top: 6px; }
+.raid-reto { font: italic 800 22px/1.1 var(--condensada); color: var(--amarillo); text-transform: uppercase; }
+.raid-fechas { color: var(--suave); font-weight: 600; margin-top: 4px; }
+.cuenta-atras { display: flex; justify-content: center; gap: 8px; margin-top: 12px; }
+.cuenta-atras .celda { background: #000; border: 2px solid var(--rojo); border-radius: 6px; min-width: 62px; padding: 4px 6px; transform: skewX(-8deg); }
+.cuenta-atras .celda b { display: block; font-family: var(--titulos); font-size: 28px; color: var(--amarillo); transform: skewX(8deg); font-variant-numeric: tabular-nums; }
+.cuenta-atras .celda small { display: block; font: 700 11px var(--condensada); text-transform: uppercase; color: var(--suave); transform: skewX(8deg); }
+
+/* ------------------------------------------------------ Tarjetas y botones */
+.tarjeta { background: rgba(22, 22, 22, .94); border: 1px solid var(--borde); border-left: 4px solid var(--rojo); border-radius: 8px; padding: 16px; margin-bottom: 14px; }
+.tarjeta h2, .tarjeta h3 { font-family: var(--titulos); font-weight: 400; text-transform: uppercase; letter-spacing: .5px; margin: 0 0 8px; }
+.tarjeta h2 { font-size: 26px; }
+.tarjeta h3 { font-size: 20px; color: var(--amarillo); }
+.tarjeta-destacada { border-left-color: var(--amarillo); background: linear-gradient(135deg, rgba(227, 6, 11, .25), rgba(22, 22, 22, .95) 60%); }
+.tarjeta-ok { border-left-color: var(--verde); text-align: center; }
+.centrado { text-align: center; }
 .suave { color: var(--suave); font-size: 14px; }
-.pie { color: var(--suave); font-size: 12px; text-align: center; }
+.etiqueta { font: 700 13px var(--condensada); text-transform: uppercase; letter-spacing: 1.5px; color: var(--amarillo); }
+.grande { font-family: var(--titulos); font-size: 44px; line-height: 1.1; }
+h3.seccion { margin-top: 18px; padding-top: 10px; border-top: 1px dashed var(--borde); }
 
 .boton {
-  display: block; width: 100%; text-align: center; text-decoration: none;
-  background: #2a2a2e; color: var(--texto); border: 1px solid #3a3a40;
-  border-radius: 12px; padding: 13px 14px; font-size: 16px; font-weight: 600;
-  cursor: pointer; margin-top: 8px;
+  display: block; width: 100%; text-align: center; text-decoration: none; cursor: pointer;
+  margin-top: 10px; padding: 13px 14px; border-radius: 6px;
+  background: var(--gris-2); color: #fff; border: 2px solid #3a3a3a;
+  font: 700 18px/1.2 var(--condensada); text-transform: uppercase; letter-spacing: .5px;
 }
 .boton:disabled { opacity: .45; }
-.boton-principal { background: var(--rojo); border-color: var(--rojo); color: #fff; }
-.boton-principal:active { background: var(--rojo-osc); }
+.boton-principal { background: var(--rojo); border-color: #000; box-shadow: 3px 3px 0 var(--amarillo); }
+.boton-principal:active { transform: translate(2px, 2px); box-shadow: 1px 1px 0 var(--amarillo); }
 .boton-aviso { background: transparent; border-color: var(--amarillo); color: var(--amarillo); }
-.boton-prueba { background: var(--amarillo); color: #000; border-color: var(--amarillo); }
+.boton-prueba { background: var(--amarillo); color: #000; border-color: #000; }
 .enlace { background: none; border: 0; color: var(--suave); text-decoration: underline; font-size: 14px; padding: 10px 0 0; cursor: pointer; width: 100%; }
 
-form label { display: block; font-size: 14px; margin-top: 10px; }
-form input {
-  display: block; width: 100%; margin-top: 4px; font-size: 17px;
-  padding: 12px; border-radius: 10px; border: 1px solid #3a3a40;
-  background: #111; color: var(--texto);
+/* ------------------------------------------------------------ Formularios */
+form label { display: block; font-weight: 600; font-size: 14px; margin-top: 12px; }
+form input:not([type=checkbox]), form select {
+  display: block; width: 100%; margin-top: 4px; font: 17px var(--texto);
+  padding: 12px; border-radius: 6px; border: 1px solid #3a3a3a; background: #0d0d0d; color: #fff;
 }
-form input:focus { outline: 2px solid var(--amarillo); border-color: transparent; }
+form input:focus, form select:focus { outline: 2px solid var(--amarillo); border-color: transparent; }
+label.casilla { display: flex; gap: 10px; align-items: flex-start; font-weight: 400; }
+label.casilla input { width: 22px; height: 22px; margin: 1px 0 0; accent-color: var(--rojo); flex: none; }
+.total { margin-top: 16px; font: 700 22px var(--condensada); text-transform: uppercase; }
+.total b { color: var(--amarillo); font-family: var(--titulos); font-weight: 400; font-size: 28px; }
+.dato-pago { background: #0d0d0d; border: 1px dashed var(--amarillo); border-radius: 6px; padding: 10px 12px; margin-top: 10px; }
+.dato-pago b { font-size: 18px; letter-spacing: .5px; word-break: break-all; }
+.estado-pago { margin-top: 8px; font-size: 14px; color: var(--suave); }
 
-/* ---------- Inicio ---------- */
-.tarjeta-hero { text-align: center; background: radial-gradient(circle at top, #2a0c0a 0%, var(--tarjeta) 70%); }
-.hola { font-size: 20px; font-weight: 700; }
-.progreso { position: relative; width: 150px; height: 150px; margin: 14px auto 6px; }
-.anillo { width: 100%; height: 100%; transform: rotate(-90deg); }
-.anillo circle { fill: none; stroke-width: 11; }
-.anillo-fondo { stroke: #2d2d31; }
-.anillo-valor { stroke: var(--amarillo); stroke-linecap: round; transition: stroke-dashoffset .6s; }
-.progreso-texto { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; }
-.progreso-texto span { font-size: 34px; font-weight: 800; }
-.progreso-texto small { color: var(--suave); }
-.estado-inicio { color: var(--suave); margin-bottom: 4px; }
-.cuenta-atras { font-size: 30px; font-weight: 800; color: var(--amarillo); text-align: center; font-variant-numeric: tabular-nums; margin: 6px 0; }
-.barra { height: 8px; background: #2d2d31; border-radius: 4px; overflow: hidden; margin: 8px 0; }
-.barra > div { height: 100%; width: 0; background: var(--amarillo); transition: width .2s; }
+/* ---------------------------------------------------------- Evento / club */
+.programa .fila { display: grid; grid-template-columns: 92px 1fr; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--borde); }
+.programa .fila:last-child { border-bottom: 0; }
+.programa .cuando { font: 700 14px/1.2 var(--condensada); text-transform: uppercase; color: var(--amarillo); }
+.programa .cuando small { display: block; color: var(--suave); font-weight: 500; text-transform: none; }
+.programa .que b { display: block; }
+.programa .que span { color: var(--suave); font-size: 14px; }
+.precios { display: flex; gap: 12px; margin-bottom: 8px; }
+.precio { flex: 1; text-align: center; background: #000; border: 2px solid var(--rojo); border-radius: 6px; padding: 8px; }
+.precio b { display: block; font-family: var(--titulos); font-size: 32px; color: var(--amarillo); }
+.precio span { font: 700 14px var(--condensada); text-transform: uppercase; }
+.lista { padding-left: 20px; margin: 6px 0; }
+.lista li { margin-bottom: 6px; }
+.aviso-seguridad { border-left-color: var(--amarillo); }
+.club-cabecera { text-align: center; margin-bottom: 12px; }
+.club-logo { width: min(70vw, 300px); filter: drop-shadow(0 0 1px #fff) drop-shadow(0 6px 18px rgba(227, 6, 11, .45)); }
+.actividades .actividad { padding: 10px 0; border-bottom: 1px solid var(--borde); }
+.actividades .actividad:last-child { border-bottom: 0; }
+.actividades b { font: italic 800 18px var(--condensada); text-transform: uppercase; }
+.telefonos a { display: flex; justify-content: space-between; align-items: center; text-decoration: none; color: #fff; padding: 10px 0; border-bottom: 1px solid var(--borde); }
+.telefonos a:last-child { border-bottom: 0; }
+.telefonos a b { font-family: var(--titulos); font-weight: 400; font-size: 26px; color: var(--amarillo); letter-spacing: 1px; }
+.contacto-botones { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px; }
+.contacto-botones .boton { margin: 0; }
+.boton-whatsapp { background: #1fa855; border-color: #000; }
+.boton-instagram { background: linear-gradient(45deg, #f9a825, #e1306c, #833ab4); border-color: #000; }
+.boton-facebook { background: #1877f2; border-color: #000; }
 
-/* ---------- Mapa ---------- */
-#ruta-activa { position: absolute; inset: 0; display: flex; flex-direction: column; }
-.mapa { flex: 1; min-height: 200px; background: #cfd6d0; }
-.mapa-vacio { flex: 1; display: flex; align-items: center; justify-content: center; text-align: center; padding: 20px; color: var(--suave); }
-.botones-mapa { position: absolute; right: 12px; top: 12px; z-index: 500; display: flex; flex-direction: column; gap: 8px; }
-.boton-redondo { width: 46px; height: 46px; border-radius: 50%; border: 0; background: #111d; color: #fff; font-size: 22px; box-shadow: 0 2px 6px #0008; cursor: pointer; }
-.panel-destino {
-  background: var(--tarjeta); border-top: 3px solid var(--rojo);
-  padding: 12px 16px calc(var(--menu-alto) + var(--seguro-abajo) + 10px);
-  max-height: 55%; overflow-y: auto;
-}
-.panel-etiqueta { color: var(--amarillo); font-size: 12px; text-transform: uppercase; letter-spacing: .8px; font-weight: 700; }
-.panel-nombre { font-size: 21px; font-weight: 800; }
+/* ------------------------------------------------------------------- Ruta */
+.pantalla-ruta { padding-top: 10px; }
+.pestanas { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-bottom: 12px; }
+.pestana { border: 2px solid #3a3a3a; background: var(--gris); color: var(--suave); border-radius: 6px; padding: 10px 4px; font: 700 17px var(--condensada); text-transform: uppercase; cursor: pointer; }
+.pestana.activa { background: var(--rojo); color: #fff; border-color: #000; box-shadow: 2px 2px 0 var(--amarillo); }
+.mapa-caja { position: relative; border-radius: 8px; overflow: hidden; border: 2px solid var(--rojo); }
+.mapa { height: 52vh; min-height: 280px; background: #cfd6d0; }
+.mapa-vacio { height: 52vh; min-height: 280px; display: flex; align-items: center; justify-content: center; text-align: center; padding: 20px; color: var(--suave); background: var(--gris); }
+.botones-mapa { position: absolute; right: 10px; top: 10px; z-index: 500; display: flex; flex-direction: column; gap: 8px; }
+.boton-redondo { width: 44px; height: 44px; border-radius: 50%; border: 2px solid var(--amarillo); background: #000c; color: #fff; font-size: 22px; cursor: pointer; }
+.panel-destino { background: var(--gris); border: 1px solid var(--borde); border-top: 4px solid var(--rojo); border-radius: 8px; padding: 12px 14px 14px; margin: 12px 0 14px; }
+.panel-etiqueta { font: 700 13px var(--condensada); color: var(--amarillo); text-transform: uppercase; letter-spacing: 1.2px; }
+.panel-nombre { font-family: var(--titulos); font-size: 26px; line-height: 1.15; text-transform: uppercase; }
 .panel-lugar { color: var(--suave); font-size: 14px; }
-.panel-distancia { margin-top: 6px; font-weight: 600; }
+.panel-distancia { margin-top: 6px; font-weight: 700; }
 .panel-distancia.cerca { color: var(--verde); }
 .panel-pista { font-size: 14px; color: var(--suave); margin-top: 4px; }
 .panel-botones { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-.panel-botones .boton { font-size: 15px; padding: 12px 8px; }
+.barra-progreso { height: 8px; background: #2d2d31; border-radius: 4px; overflow: hidden; margin: 8px 0; }
+.barra-progreso > div { height: 100%; width: 0; background: var(--amarillo); transition: width .2s; }
 
 .marcador { width: 30px; height: 30px; border-radius: 50%; border: 3px solid #fff; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 14px; color: #fff; box-shadow: 0 2px 5px #0009; }
 .marcador-hecho { background: var(--verde); }
 .marcador-siguiente { background: var(--rojo); animation: latido 1.4s infinite; }
 .marcador-pendiente { background: #666; }
 .marcador-salida { background: #000; color: var(--amarillo); }
-@keyframes latido { 0%,100% { box-shadow: 0 0 0 0 #d7261eaa; } 50% { box-shadow: 0 0 0 10px #d7261e00; } }
+@keyframes latido { 0%, 100% { box-shadow: 0 0 0 0 #e3060baa; } 50% { box-shadow: 0 0 0 10px #e3060b00; } }
 .yo { width: 18px; height: 18px; background: #1e88ff; border: 3px solid #fff; border-radius: 50%; box-shadow: 0 0 0 6px #1e88ff44; }
 
-/* ---------- Carnet ---------- */
+/* ----------------------------------------------------------------- Carnet */
 .carnet-cabecera { text-align: center; border: 2px dashed var(--amarillo); }
-.carnet-titulo { font-size: 13px; text-transform: uppercase; letter-spacing: 1.5px; color: var(--amarillo); }
-.carnet-nombre { font-size: 20px; font-weight: 800; margin-top: 4px; }
+.carnet-logo { width: 140px; filter: drop-shadow(0 0 1px #fff); }
+.carnet-titulo { font: 700 13px var(--condensada); text-transform: uppercase; letter-spacing: 2px; color: var(--amarillo); margin-top: 4px; }
+.carnet-nombre { font-family: var(--titulos); font-size: 24px; text-transform: uppercase; }
+.progreso-linea { height: 12px; background: #000; border: 1px solid #333; border-radius: 6px; overflow: hidden; margin: 10px 0 4px; }
+.progreso-linea > div { height: 100%; width: 0; background: linear-gradient(90deg, var(--rojo), var(--amarillo)); transition: width .6s; }
 .rejilla-sellos { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-.sello {
-  background: var(--tarjeta); border: 1px solid var(--borde); border-radius: 14px;
-  overflow: hidden; display: flex; flex-direction: column;
-}
-.sello-foto { aspect-ratio: 4/3; background: #222 center/cover no-repeat; display: flex; align-items: center; justify-content: center; font-size: 34px; color: #444; }
+.sello { background: var(--gris); border: 1px solid var(--borde); border-radius: 8px; overflow: hidden; }
+.sello-foto { aspect-ratio: 4/3; background: #222 center/cover no-repeat; display: flex; align-items: center; justify-content: center; font-family: var(--titulos); font-size: 38px; color: #3a3a3a; }
 .sello-info { padding: 8px 10px 10px; font-size: 13px; }
-.sello-num { color: var(--amarillo); font-weight: 800; font-size: 12px; }
+.sello-num { color: var(--amarillo); font: 700 12px var(--condensada); letter-spacing: 1px; }
 .sello-nombre { font-weight: 700; font-size: 14px; line-height: 1.25; }
 .sello-hora { color: var(--suave); }
-.sello-estado { font-size: 12px; margin-top: 2px; }
-.sello-estado.ok { color: var(--verde); }
-.sello-estado.pte { color: var(--amarillo); }
-.sello-pendiente .sello-foto::after { content: "?"; }
-.enhorabuena { text-align: center; background: linear-gradient(160deg, #3a2a00, var(--tarjeta)); border-color: var(--amarillo); }
+.sello-estado.ok { color: var(--verde); font-size: 12px; }
+.sello-estado.pte { color: var(--amarillo); font-size: 12px; }
+.enhorabuena { text-align: center; border-left-color: var(--amarillo); background: linear-gradient(160deg, #3a2a00, var(--gris)); }
 .enhorabuena h2 { color: var(--amarillo); }
 
-/* ---------- Info ---------- */
-.lista { padding-left: 20px; margin: 0; }
-.lista li { margin-bottom: 6px; }
-.aviso-seguridad { border-color: var(--amarillo); }
-.telefonos a { display: block; font-size: 20px; font-weight: 700; color: var(--amarillo); text-decoration: none; padding: 4px 0; }
-
-/* ---------- Menú inferior ---------- */
-.menu {
-  position: fixed; left: 0; right: 0; bottom: 0; z-index: 1000;
-  display: flex; background: #0a0a0a; border-top: 1px solid var(--borde);
-  padding-bottom: var(--seguro-abajo); height: calc(var(--menu-alto) + var(--seguro-abajo));
-}
-.menu button {
-  flex: 1; background: none; border: 0; color: var(--suave); font-size: 12px;
-  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; cursor: pointer;
-}
-.menu-icono { font-size: 22px; line-height: 1; }
-.menu button.activo { color: var(--amarillo); }
-
-/* ---------- Modal y aviso ---------- */
-.modal { position: fixed; inset: 0; z-index: 2000; background: #000b; display: flex; align-items: center; justify-content: center; padding: 20px; }
-.modal-caja { background: var(--tarjeta); border: 1px solid var(--borde); border-radius: 18px; padding: 20px; max-width: 420px; width: 100%; text-align: center; max-height: 90vh; overflow-y: auto; }
-.modal-caja h2 { margin-top: 0; color: var(--amarillo); }
-.modal-caja input { width: 100%; font-size: 18px; padding: 12px; border-radius: 10px; border: 1px solid #3a3a40; background: #111; color: #fff; margin-top: 8px; text-align: center; }
-.modal-foto { width: 100%; border-radius: 12px; margin: 8px 0; }
+/* ------------------------------------------------------------ Modal/toast */
+.modal { position: fixed; inset: 0; z-index: 2000; background: #000c; display: flex; align-items: center; justify-content: center; padding: 20px; }
+.modal-caja { background: var(--gris); border: 2px solid var(--rojo); border-radius: 10px; padding: 20px; max-width: 420px; width: 100%; text-align: center; max-height: 90vh; overflow-y: auto; box-shadow: 6px 6px 0 var(--amarillo); }
+.modal-caja h2 { margin-top: 0; font-family: var(--titulos); font-weight: 400; color: var(--amarillo); text-transform: uppercase; }
+.modal-caja input { width: 100%; font-size: 18px; padding: 12px; border-radius: 6px; border: 1px solid #3a3a3a; background: #0d0d0d; color: #fff; margin-top: 8px; text-align: center; }
+.modal-foto { width: 100%; border-radius: 8px; margin: 8px 0; }
 .modal-botones { display: grid; gap: 4px; margin-top: 6px; }
-.toast { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(var(--menu-alto) + var(--seguro-abajo) + 16px); z-index: 3000; background: #fff; color: #000; padding: 10px 16px; border-radius: 22px; font-weight: 600; box-shadow: 0 4px 14px #0008; max-width: 90vw; text-align: center; }
-
+.toast { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(24px + var(--abajo)); z-index: 3000; background: #fff; color: #000; padding: 10px 16px; border-radius: 22px; font-weight: 700; box-shadow: 0 4px 14px #0008; max-width: 90vw; text-align: center; }
 .leaflet-container { font: inherit; }
