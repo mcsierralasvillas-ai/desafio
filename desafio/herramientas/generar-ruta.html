@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Generar trazado de la ruta</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<style>
+  body { font-family: system-ui, sans-serif; margin: 0; background: #111; color: #eee; }
+  header { padding: 14px 18px; background: #000; border-bottom: 3px solid #d7261e; }
+  h1 { margin: 0; font-size: 20px; }
+  .caja { padding: 14px 18px; max-width: 900px; }
+  button { background: #d7261e; color: #fff; border: 0; border-radius: 10px; padding: 12px 18px; font-size: 16px; font-weight: 600; cursor: pointer; margin: 6px 6px 6px 0; }
+  button:disabled { opacity: .4; }
+  #mapa { height: 60vh; margin: 0 18px; border-radius: 12px; }
+  table { border-collapse: collapse; margin-top: 10px; }
+  td, th { padding: 4px 12px 4px 0; text-align: left; }
+  .ok { color: #2fb56a; } .mal { color: #ff6b6b; }
+  code { background: #222; padding: 2px 5px; border-radius: 4px; }
+</style>
+</head>
+<body>
+<header><h1>Generar el trazado de la ruta por carretera</h1></header>
+<div class="caja">
+  <p>Esta herramienta lee los puntos de <code>js/config.js</code>, calcula el recorrido por carretera de cada tramo
+  y genera el archivo <code>ruta-trazado.json</code> que usa la app para dibujar la ruta.</p>
+  <p>1. Pulsa <b>Calcular ruta</b> (necesita internet). &nbsp; 2. Revisa en el mapa que va por las carreteras que queréis.
+  &nbsp; 3. Pulsa <b>Descargar</b> y pon el archivo en la carpeta principal de la app (junto a <code>index.html</code>).</p>
+  <p style="color:#aaa">Si un tramo no va por donde queréis, añade puntos de paso con <code>via</code> en <code>js/config.js</code> y vuelve a calcular.</p>
+  <button id="calcular">Calcular ruta</button>
+  <button id="descargar" disabled>Descargar ruta-trazado.json</button>
+  <div id="resumen"></div>
+</div>
+<div id="mapa"></div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="../js/config.js"></script>
+<script>
+  var C = window.CONFIG;
+  var paradas = [C.salida].concat(C.puntos, [C.llegada]);
+  var mapa = L.map('mapa').setView([C.salida.lat, C.salida.lng], 9);
+  L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 18, attribution: '&copy; OpenStreetMap' }).addTo(mapa);
+  paradas.forEach(function (p, i) {
+    L.marker([p.lat, p.lng]).bindTooltip((i === 0 ? 'Salida' : i === paradas.length - 1 ? 'Llegada' : 'Punto ' + i) + ': ' + p.nombre, { permanent: false }).addTo(mapa);
+  });
+  var capa = L.layerGroup().addTo(mapa);
+  var resultado = null;
+  var colores = ['#d7261e', '#ffc400', '#2fb56a', '#1e88ff', '#e040fb', '#ff9100', '#00e5ff', '#fff'];
+
+  function tramo(i) {
+    var a = paradas[i], b = paradas[i + 1];
+    var pts = [[a.lng, a.lat]].concat((b.via || []).map(function (v) { return [v[1], v[0]]; }), [[b.lng, b.lat]]);
+    var url = 'https://router.project-osrm.org/route/v1/driving/' + pts.map(function (p) { return p[0] + ',' + p[1]; }).join(';') + '?overview=full&geometries=geojson';
+    return fetch(url).then(function (r) { return r.json(); }).then(function (j) {
+      if (j.code !== 'Ok') throw new Error(j.message || j.code);
+      var ruta = j.routes[0];
+      return {
+        linea: ruta.geometry.coordinates.map(function (c) { return [+c[1].toFixed(5), +c[0].toFixed(5)]; }),
+        km: ruta.distance / 1000, min: ruta.duration / 60
+      };
+    });
+  }
+  function esperar(ms) { return new Promise(function (r) { setTimeout(r, ms); }); }
+
+  document.getElementById('calcular').onclick = function () {
+    var boton = this; boton.disabled = true;
+    capa.clearLayers();
+    var tramos = [], filas = [], totalKm = 0, totalMin = 0;
+    var i = 0;
+    function siguiente() {
+      if (i >= paradas.length - 1) return Promise.resolve();
+      document.getElementById('resumen').innerHTML = 'Calculando tramo ' + (i + 1) + ' de ' + (paradas.length - 1) + '…';
+      return tramo(i).then(function (t) {
+        tramos.push(t.linea);
+        totalKm += t.km; totalMin += t.min;
+        filas.push('<tr><td>' + (i + 1) + '</td><td>' + paradas[i].nombre + ' → ' + paradas[i + 1].nombre + '</td><td>' + t.km.toFixed(0) + ' km</td><td>' + Math.round(t.min) + ' min</td></tr>');
+        L.polyline(t.linea, { color: colores[i % colores.length], weight: 5 }).addTo(capa);
+        i++;
+        return esperar(1100).then(siguiente); // no saturar el servicio gratuito
+      });
+    }
+    siguiente().then(function () {
+      resultado = { generado: new Date().toISOString(), tramos: tramos };
+      mapa.fitBounds(L.featureGroup(capa.getLayers()).getBounds(), { padding: [20, 20] });
+      document.getElementById('resumen').innerHTML = '<p class="ok">Ruta calculada.</p><table><tr><th>Tramo</th><th></th><th>Distancia</th><th>Tiempo (coche)</th></tr>' +
+        filas.join('') + '<tr><th></th><th>TOTAL</th><th>' + totalKm.toFixed(0) + ' km</th><th>' + Math.floor(totalMin / 60) + ' h ' + Math.round(totalMin % 60) + ' min</th></tr></table>';
+      document.getElementById('descargar').disabled = false;
+    }).catch(function (e) {
+      document.getElementById('resumen').innerHTML = '<p class="mal">Error: ' + e.message + '. Vuelve a intentarlo en un minuto.</p>';
+    }).then(function () { boton.disabled = false; });
+  };
+
+  document.getElementById('descargar').onclick = function () {
+    var blob = new Blob([JSON.stringify(resultado)], { type: 'application/json' });
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'ruta-trazado.json';
+    a.click();
+  };
+</script>
+</body>
+</html>

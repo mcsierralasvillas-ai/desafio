@@ -1,0 +1,202 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Desafío de las Presas</title>
+  <meta name="description" content="App de ruta del Motor Raid Sierra Las Villas">
+  <meta name="theme-color" content="#111111">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icons/icon-192.png">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Desafío Presas">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
+  <link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+
+  <header class="cabecera">
+    <img src="icons/icon-192.png" alt="" class="cabecera-logo">
+    <div>
+      <div class="cabecera-titulo" id="titulo-evento">Desafío de las Presas</div>
+      <div class="cabecera-sub" id="subtitulo-evento"></div>
+    </div>
+    <div class="cabecera-estado" id="estado-conexion" title="Conexión"></div>
+  </header>
+
+  <div class="aviso-prueba" id="aviso-prueba" hidden>MODO PRUEBA · no usar en el evento</div>
+
+  <main>
+    <!-- ============ INICIO ============ -->
+    <section class="pantalla" id="pantalla-inicio">
+      <div id="bloque-registro" class="tarjeta" hidden>
+        <h2>Regístrate en el desafío</h2>
+        <p class="suave">Rellena tus datos tal y como aparecen en tu inscripción. Tu número de dorsal viene en el pack de bienvenida.</p>
+        <form id="form-registro" autocomplete="on">
+          <label>Nombre y apellidos
+            <input name="nombre" required minlength="3" autocomplete="name">
+          </label>
+          <label>Número de dorsal
+            <input name="dorsal" required inputmode="numeric" pattern="[0-9A-Za-z]{1,8}">
+          </label>
+          <label>Teléfono
+            <input name="telefono" type="tel" inputmode="tel" autocomplete="tel">
+          </label>
+          <label>Correo electrónico <span class="suave">(opcional)</span>
+            <input name="email" type="email" autocomplete="email">
+          </label>
+          <button class="boton boton-principal" type="submit">Empezar</button>
+        </form>
+      </div>
+
+      <div id="bloque-bienvenida" hidden>
+        <div class="tarjeta tarjeta-hero">
+          <div class="hola" id="hola"></div>
+          <div class="progreso">
+            <svg viewBox="0 0 120 120" class="anillo" aria-hidden="true">
+              <circle cx="60" cy="60" r="52" class="anillo-fondo"/>
+              <circle cx="60" cy="60" r="52" class="anillo-valor" id="anillo-valor"/>
+            </svg>
+            <div class="progreso-texto">
+              <span id="progreso-num">0/4</span>
+              <small>sellos</small>
+            </div>
+          </div>
+          <div id="estado-inicio" class="estado-inicio"></div>
+          <button class="boton boton-principal" data-ir="ruta" id="boton-ir-ruta">Ver la ruta</button>
+        </div>
+
+        <div class="tarjeta" id="bloque-cuenta-atras" hidden>
+          <h3>La ruta se desbloquea en</h3>
+          <div class="cuenta-atras" id="cuenta-atras"></div>
+          <p class="suave">Hasta entonces la ruta es sorpresa. Abre la app antes de salir para descargar el mapa.</p>
+        </div>
+
+        <div class="tarjeta" id="bloque-offline">
+          <h3>Mapa sin conexión</h3>
+          <p class="suave" id="texto-offline">En la sierra hay zonas sin cobertura. Descarga el mapa con wifi antes de salir.</p>
+          <div class="barra" hidden id="barra-offline"><div id="barra-offline-valor"></div></div>
+          <button class="boton" id="boton-offline">Descargar mapa</button>
+        </div>
+
+        <div class="tarjeta" id="bloque-cola" hidden>
+          <h3>Fotos pendientes de envío</h3>
+          <p class="suave" id="texto-cola"></p>
+          <button class="boton" id="boton-reintentar">Enviar ahora</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ RUTA ============ -->
+    <section class="pantalla pantalla-mapa" id="pantalla-ruta" hidden>
+      <div id="ruta-bloqueada" class="tarjeta centrado" hidden>
+        <h2>Ruta sorpresa</h2>
+        <p>La ruta se mostrará en:</p>
+        <div class="cuenta-atras" id="cuenta-atras-ruta"></div>
+      </div>
+      <div id="ruta-sin-registro" class="tarjeta centrado" hidden>
+        <p>Primero regístrate en la pantalla de Inicio.</p>
+        <button class="boton boton-principal" data-ir="inicio">Ir a Inicio</button>
+      </div>
+
+      <div id="ruta-activa" hidden>
+        <div id="mapa" class="mapa"></div>
+        <div id="mapa-no-disponible" class="mapa-vacio" hidden>
+          <div>El mapa no está disponible (sin conexión la primera vez).<br>
+          Usa el botón <b>Navegar con Google Maps</b>.</div>
+        </div>
+        <div class="botones-mapa">
+          <button class="boton-redondo" id="boton-centrar" title="Centrar en mí" aria-label="Centrar en mí">◎</button>
+          <button class="boton-redondo" id="boton-tramo" title="Ver tramo" aria-label="Ver tramo">⤢</button>
+        </div>
+
+        <div class="panel-destino">
+          <div class="panel-etiqueta" id="destino-etiqueta">Siguiente punto</div>
+          <div class="panel-nombre" id="destino-nombre"></div>
+          <div class="panel-lugar" id="destino-lugar"></div>
+          <div class="panel-distancia" id="destino-distancia"></div>
+          <div class="panel-pista" id="destino-pista"></div>
+          <div class="panel-botones">
+            <a class="boton" id="boton-navegar" target="_blank" rel="noopener">Navegar con Google Maps</a>
+            <button class="boton boton-principal" id="boton-sellar">📷 Sellar con foto</button>
+          </div>
+          <button class="enlace" id="boton-sin-gps">¿El GPS no te detecta en el punto?</button>
+          <button class="boton boton-prueba" id="boton-simular" hidden>Simular llegada (modo prueba)</button>
+        </div>
+      </div>
+      <input type="file" accept="image/*" capture="environment" id="entrada-foto" hidden>
+    </section>
+
+    <!-- ============ CARNET ============ -->
+    <section class="pantalla" id="pantalla-carnet" hidden>
+      <div class="tarjeta carnet-cabecera">
+        <div class="carnet-titulo">Carnet de sellado</div>
+        <div class="carnet-nombre" id="carnet-nombre"></div>
+      </div>
+      <div id="enhorabuena" class="tarjeta enhorabuena" hidden></div>
+      <div class="rejilla-sellos" id="rejilla-sellos"></div>
+    </section>
+
+    <!-- ============ INFO ============ -->
+    <section class="pantalla" id="pantalla-info" hidden>
+      <div class="tarjeta">
+        <h3>Cómo funciona</h3>
+        <ol class="lista">
+          <li>Sigue el tramo marcado en el mapa hasta el siguiente punto.</li>
+          <li>Al llegar, pulsa <b>Sellar con foto</b> y haz una foto en la que se vea el sitio.</li>
+          <li>Se desbloquea el siguiente tramo.</li>
+          <li>Con todos los sellos, ve a <b id="info-final"></b> a por tu diploma.</li>
+        </ol>
+        <p class="suave">Las fotos se guardan en el móvil y se envían solas cuando haya cobertura. No hace falta internet para seguir la ruta si has descargado el mapa.</p>
+      </div>
+
+      <div class="tarjeta aviso-seguridad">
+        <h3>Seguridad</h3>
+        <p>No uses el móvil conduciendo. Para siempre en un lugar seguro para mirar la ruta o hacer la foto. Esto no es una carrera: disfruta.</p>
+      </div>
+
+      <div class="tarjeta">
+        <h3>Teléfonos de la organización</h3>
+        <div id="info-telefonos" class="telefonos"></div>
+        <button class="boton boton-aviso" id="boton-emergencia">Ver ruta completa (organización)</button>
+      </div>
+
+      <div class="tarjeta" id="bloque-instalar">
+        <h3>Instalar la app en el móvil</h3>
+        <button class="boton boton-principal" id="boton-instalar" hidden>Instalar app</button>
+        <p><b>iPhone:</b> abre la web en Safari → botón <b>Compartir</b> (cuadrado con flecha) → <b>Añadir a pantalla de inicio</b>.</p>
+        <p><b>Android:</b> abre la web en Chrome → menú <b>⋮</b> → <b>Instalar aplicación</b> (o "Añadir a pantalla de inicio").</p>
+      </div>
+
+      <div class="tarjeta">
+        <h3>Mis datos</h3>
+        <p class="suave" id="info-participante"></p>
+        <button class="enlace" id="boton-borrar">Borrar datos de este móvil (organización)</button>
+      </div>
+      <p class="pie" id="pie-version"></p>
+    </section>
+  </main>
+
+  <nav class="menu" aria-label="Menú">
+    <button data-ir="inicio" class="activo"><span class="menu-icono">⌂</span>Inicio</button>
+    <button data-ir="ruta"><span class="menu-icono">🗺</span>Ruta</button>
+    <button data-ir="carnet"><span class="menu-icono">✪</span>Carnet</button>
+    <button data-ir="info"><span class="menu-icono">ℹ</span>Info</button>
+  </nav>
+
+  <div class="modal" id="modal" hidden>
+    <div class="modal-caja">
+      <div id="modal-contenido"></div>
+      <div class="modal-botones" id="modal-botones"></div>
+    </div>
+  </div>
+  <div class="toast" id="toast" hidden></div>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+  <script src="js/config.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
