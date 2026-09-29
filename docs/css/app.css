@@ -254,3 +254,19 @@ label.casilla input { width: 22px; height: 22px; margin: 1px 0 0; accent-color: 
 .hazte-socio .telefonos, .hazte-socio .contacto-botones { text-align: left; margin-top: 12px; }
 .hazte-logo { width: 150px; filter: drop-shadow(0 0 1px #fff); }
 .acceso-error { margin-top: 12px; padding: 10px 12px; border-radius: 6px; background: rgba(227, 6, 11, .15); border: 1px solid var(--rojo); font-size: 15px; }
+
+/* ------------------------------------------------------ Inscripción v2 */
+.cena-aviso { background: rgba(255, 212, 0, .08); border: 1px dashed var(--amarillo); border-radius: 6px; padding: 10px 12px; font-size: 15px; }
+.cena-aviso b { color: var(--amarillo); }
+.desglose .linea { display: flex; justify-content: space-between; gap: 10px; padding: 6px 0; border-bottom: 1px solid var(--borde); font-size: 15px; }
+.desglose .linea:last-child { border-bottom: 0; }
+.desglose .linea b { white-space: nowrap; }
+.condiciones { max-height: 260px; overflow-y: auto; background: #0d0d0d; border: 1px solid #3a3a3a; border-radius: 6px; padding: 12px 14px; font-size: 13.5px; line-height: 1.5; color: #ddd; }
+.condiciones h4 { margin: 12px 0 4px; font: 700 14px var(--condensada); text-transform: uppercase; color: var(--amarillo); letter-spacing: .5px; }
+.condiciones h4:first-child { margin-top: 0; }
+.condiciones p { margin: 0 0 6px; }
+.aviso-validez { margin: 12px 0 0; padding: 10px 12px; border-radius: 6px; background: rgba(227, 6, 11, .15); border: 1px solid var(--rojo); font-size: 14px; text-align: center; }
+.tarjeta-pendiente { border-left-color: var(--amarillo); text-align: center; }
+.estado-chip { display: inline-block; margin-top: 6px; padding: 3px 10px; border-radius: 12px; font: 700 13px var(--condensada); text-transform: uppercase; letter-spacing: .5px; }
+.estado-chip.pendiente { background: var(--amarillo); color: #000; }
+.estado-chip.pagada { background: var(--verde); color: #000; }

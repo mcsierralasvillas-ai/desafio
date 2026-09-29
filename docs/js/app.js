@@ -8,7 +8,7 @@
 
   var C = window.CONFIG;
   var R = C.ruta;
-  var VERSION_APP = '2.1.0';
+  var VERSION_APP = '2.2.0';
   var CLAVE = 'mcslv_estado_v2';
   var TOTAL = R.puntos.length;
   var LEAFLET_JS = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
@@ -268,15 +268,44 @@
 
   /* ------------------------------------------------------------------
      INSCRIPCIÓN Y PAGO
+     Flujo: formulario → servidor (guarda la solicitud y crea el pago)
+            → pasarela (tarjeta, Apple Pay, Google Pay, Bizum)
+            → vuelta a la app → comprobación → inscripción válida con Nº
      ------------------------------------------------------------------ */
   var I = C.inscripcion;
   function referencia(ins) {
-    return ins.numero ? 'Nº ' + String(ins.numero).padStart(3, '0') : 'pendiente de confirmar';
+    if (ins.estado === 'pagada' && ins.numero) return 'Nº ' + String(ins.numero).padStart(3, '0');
+    return 'pendiente de pago';
   }
-  function concepto(ins) {
-    return 'RAID27 ' + (ins.numero ? String(ins.numero).padStart(3, '0') + ' ' : '') + ins.apellidos.split(' ')[0].toUpperCase();
+  function concepto(ins) { return 'RAID27 ' + ins.apellidos.split(' ')[0].toUpperCase() + ' ' + ins.dni.slice(-4); }
+
+  /* Importe: se recalcula en el servidor, esto es solo para mostrarlo */
+  function lineasImporte(d) {
+    var l = [['Inscripción piloto', I.precioPiloto]];
+    if (d.conAcompanante) l.push(['Inscripción acompañante', I.precioAcompanante]);
+    if (I.cena && I.cena.activa) {
+      var n = (d.cenaPiloto ? 1 : 0) + (d.conAcompanante && d.cenaAcomp ? 1 : 0);
+      if (n) l.push(['Gran cena de recepción · ' + n + (n > 1 ? ' personas' : ' persona'), n * I.cena.precio]);
+    }
+    return l;
   }
-  function totalInscripcion(conAcomp) { return I.precioPiloto + (conAcomp ? I.precioAcompanante : 0); }
+  function totalLineas(l) { return l.reduce(function (t, x) { return t + x[1]; }, 0); }
+  function htmlDesglose(l) {
+    return l.map(function (x) { return '<div class="linea"><span>' + esc(x[0]) + '</span><b>' + euros(x[1]) + '</b></div>'; }).join('');
+  }
+  function datosFormulario() {
+    var f = $('#form-inscripcion');
+    var con = f.conAcompanante.checked;
+    return {
+      nombre: f.nombre.value.trim(), apellidos: f.apellidos.value.trim(), dni: normalizarDni(f.dni.value),
+      telefono: f.telefono.value.trim(), email: f.email.value.trim(), localidad: f.localidad.value.trim(),
+      moto: f.moto.value.trim(), talla: f.talla.value,
+      conAcompanante: con,
+      acompNombre: con ? f.acompNombre.value.trim() : '', acompDni: con ? normalizarDni(f.acompDni.value) : '', acompTalla: con ? f.acompTalla.value : '',
+      cenaPiloto: !!(I.cena && I.cena.activa && f.cenaPiloto.checked),
+      cenaAcomp: !!(I.cena && I.cena.activa && con && f.cenaAcomp.checked)
+    };
+  }
 
   var mostrarFormulario = false;
   function pintarInscripcion() {
@@ -287,7 +316,14 @@
     $('#insc-hecha').hidden = verForm || !ins;
     if (verForm) {
       $('#insc-intro').textContent = C.evento.nombre + ' · ' + C.evento.fechas + '. Piloto ' + euros(I.precioPiloto) + ', acompañante ' + euros(I.precioAcompanante) + '.';
-      $('#texto-condiciones').textContent = I.condiciones;
+      $$('.precio-acomp').forEach(function (e) { e.textContent = euros(I.precioAcompanante); });
+      $('#bloque-cena').hidden = !(I.cena && I.cena.activa);
+      if (I.cena) { $('#cena-texto').innerHTML = I.cena.texto; $$('.precio-cena').forEach(function (e) { e.textContent = euros(I.cena.precio); }); }
+      var cond = $('#texto-condiciones');
+      if (!cond.childElementCount) cond.innerHTML = '<h4>Condiciones de participación y exención de responsabilidad</h4>' +
+        I.condiciones.map(function (c) { return '<h4>' + esc(c[0]) + '</h4><p>' + esc(c[1]) + '</p>'; }).join('');
+      $('#texto-datos').textContent = I.textoDatos;
+      $('#texto-metodos').textContent = I.metodos;
       actualizarTotal();
     } else if (ins) {
       pintarInscripcionHecha(ins);
@@ -296,69 +332,139 @@
   function actualizarTotal() {
     var con = $('#con-acompanante').checked;
     $('#bloque-acompanante').hidden = !con;
-    $('[name=acompNombre]').required = con;
-    $('#insc-total').textContent = euros(totalInscripcion(con));
+    $('#fila-cena-acomp').hidden = !con;
+    var l = lineasImporte(datosFormulario());
+    $('#insc-desglose').innerHTML = htmlDesglose(l);
+    $('#insc-total').textContent = euros(totalLineas(l));
   }
-  function pintarInscripcionHecha(ins) {
-    $('#insc-numero').textContent = ins.numero ? 'Nº ' + String(ins.numero).padStart(3, '0') : 'Recibida';
-    $('#insc-resumen').innerHTML = '<p><b>' + esc(ins.nombre + ' ' + ins.apellidos) + '</b><br>' +
-      esc(ins.moto || '') + (ins.conAcompanante ? '<br>Acompañante: ' + esc(ins.acompNombre) : '') + '</p>';
-    $('#insc-estado-envio').textContent = ins.enviada ? 'Registrada en el club ✓' :
-      (C.urlServidor ? 'Pendiente de enviar: se enviará sola cuando haya conexión.' : 'Guardada en este móvil (servidor sin configurar).');
 
-    var total = totalInscripcion(ins.conAcompanante);
-    $('#pago-total').textContent = euros(total);
-    var enlace = ins.conAcompanante ? I.enlacePagoConAcompanante : I.enlacePagoPiloto;
-    var bT = $('#boton-pagar-tarjeta');
-    bT.hidden = !enlace;
-    if (enlace) {
-      var sep = enlace.indexOf('?') < 0 ? '?' : '&';
-      bT.href = enlace + sep + 'client_reference_id=' + encodeURIComponent(concepto(ins).replace(/\s+/g, '-')) +
-        (ins.email ? '&prefilled_email=' + encodeURIComponent(ins.email) : '');
-      bT.textContent = 'Pagar ' + euros(total) + ' con tarjeta';
+  function pintarInscripcionHecha(ins) {
+    var pagada = ins.estado === 'pagada';
+    var t = $('#insc-tarjeta-estado');
+    t.className = 'tarjeta ' + (pagada ? 'tarjeta-ok' : 'tarjeta-pendiente');
+    $('#insc-etiqueta').textContent = pagada ? 'Inscripción confirmada' : 'Inscripción pendiente de pago';
+    $('#insc-numero').textContent = pagada ? 'Nº ' + String(ins.numero).padStart(3, '0') : euros(ins.total);
+    $('#insc-resumen').innerHTML = '<p><b>' + esc(ins.nombre + ' ' + ins.apellidos) + '</b> · ' + esc(ins.moto || '') +
+      (ins.conAcompanante ? '<br>Acompañante: ' + esc(ins.acompNombre) : '') +
+      ((ins.cenaPiloto || ins.cenaAcomp) ? '<br>Cena de recepción: ' + ((ins.cenaPiloto ? 1 : 0) + (ins.cenaAcomp ? 1 : 0)) + ' persona(s)' : '') + '</p>' +
+      '<span class="estado-chip ' + (pagada ? 'pagada">Pagada ✓' : 'pendiente">Pendiente de pago') + '</span>';
+    $('#insc-estado-envio').textContent = pagada ? 'Ya puedes entrar en la Ruta con tu DNI el día del evento.' :
+      (ins.estado === 'sin-enviar' ? 'Aún no se ha podido enviar al club. Necesitas conexión.' : '');
+    $('#bloque-pago').hidden = pagada;
+    $('#boton-ir-ruta-insc').hidden = !pagada;
+    if (pagada) return;
+    $('#pago-desglose').innerHTML = htmlDesglose(lineasImporte(ins));
+    $('#pago-total').textContent = euros(ins.total);
+    var hayPasarela = !!ins.urlPago;
+    $('#boton-pagar').hidden = !hayPasarela && ins.estado !== 'sin-enviar';
+    $('#boton-pagar').textContent = ins.estado === 'sin-enviar' ? 'Enviar inscripción y pagar' : 'Pagar ' + euros(ins.total);
+    $('#pago-metodos').textContent = hayPasarela ? I.metodos : '';
+    var manual = [];
+    if (!hayPasarela && ins.estado === 'pendiente') {
+      if (I.bizum) manual.push('<div class="dato-pago">Bizum al <b>' + esc(telBonito(I.bizum)) + '</b></div>');
+      if (I.iban) manual.push('<div class="dato-pago">Transferencia a <b>' + esc(I.iban) + '</b><br>Titular: ' + esc(I.titular) + '</div>');
+      manual.push(manual.length ? '<p class="suave">Concepto: <b>' + esc(concepto(ins)) + '</b>. El club confirmará tu inscripción al recibir el pago.</p>'
+        : '<p class="suave">El club te indicará cómo pagar. Tu solicitud está guardada.</p>');
     }
-    $('#pago-bizum').hidden = !I.bizum;
-    $('#pago-bizum').innerHTML = I.bizum ? '<div class="dato-pago">Bizum al <b>' + esc(telBonito(I.bizum)) + '</b></div>' : '';
-    $('#pago-transferencia').hidden = !I.iban;
-    $('#pago-transferencia').innerHTML = I.iban ? '<div class="dato-pago">Transferencia a <b>' + esc(I.iban) + '</b><br>Titular: ' + esc(I.titular) + '</div>' : '';
-    var hayPago = enlace || I.bizum || I.iban;
-    $('#pago-sin-configurar').hidden = !!hayPago;
-    $('#pago-concepto').hidden = !(I.bizum || I.iban);
-    $('#pago-concepto').innerHTML = 'Pon como concepto: <b>' + esc(concepto(ins)) + '</b>';
+    $('#pago-manual').hidden = !manual.length;
+    $('#pago-manual').innerHTML = manual.join('');
+    $('#boton-comprobar-pago').hidden = ins.estado === 'sin-enviar';
   }
+
+  function llamarServidor(datos) {
+    return fetch(C.urlServidor, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(datos) })
+      .then(function (r) { return r.json(); })
+      .then(function (res) { if (!res || !res.ok) throw new Error((res && res.error) || 'Error del servidor'); return res; });
+  }
+
+  function errorInscripcion(t) { var e = $('#insc-error'); e.textContent = t || ''; e.hidden = !t; if (t) e.scrollIntoView({ block: 'center' }); }
 
   function enviarInscripcion(ev) {
     ev.preventDefault();
-    var f = ev.target;
-    if (!dniValido(f.dni.value)) { toast('El DNI/NIE no es correcto. Revisa números y letra.'); f.dni.focus(); return; }
-    var dniN = normalizarDni(f.dni.value);
-    if (estado.inscripciones.some(function (x) { return x.dni === dniN; })) { toast('Ese DNI ya está inscrito desde este móvil'); return; }
-    var ins = {
-      id: 'I' + Date.now(),
-      fecha: new Date().toISOString(),
-      nombre: f.nombre.value.trim(),
-      apellidos: f.apellidos.value.trim(),
-      dni: dniN,
-      telefono: f.telefono.value.trim(),
-      email: f.email.value.trim(),
-      localidad: f.localidad.value.trim(),
-      moto: f.moto.value.trim(),
-      talla: f.talla.value,
-      conAcompanante: f.conAcompanante.checked,
-      acompNombre: f.conAcompanante.checked ? f.acompNombre.value.trim() : '',
-      acompTalla: f.conAcompanante.checked ? f.acompTalla.value : '',
-      numero: null,
-      enviada: false
-    };
+    var f = ev.target, d = datosFormulario();
+    errorInscripcion('');
+    var faltan = ['nombre', 'apellidos', 'telefono', 'email', 'moto'].filter(function (k) { return !f[k].value.trim(); });
+    if (faltan.length) { errorInscripcion('Rellena todos los datos del piloto.'); return; }
+    if (!f.talla.value) { errorInscripcion('Elige la talla de camiseta del piloto.'); return; }
+    if (!f.email.checkValidity()) { errorInscripcion('El correo electrónico no es correcto.'); return; }
+    if (!dniValido(d.dni)) { errorInscripcion('El DNI/NIE del piloto no es correcto. Revisa números y letra.'); return; }
+    if (d.conAcompanante) {
+      if (!d.acompNombre) { errorInscripcion('Escribe el nombre del acompañante.'); return; }
+      if (!dniValido(d.acompDni)) { errorInscripcion('El DNI/NIE del acompañante no es correcto.'); return; }
+      if (d.acompDni === d.dni) { errorInscripcion('El DNI del acompañante no puede ser el mismo que el del piloto.'); return; }
+    }
+    if (!f.acepta.checked) { errorInscripcion('Tienes que aceptar las condiciones de participación y responsabilidad.'); return; }
+    if (!f.aceptaDatos.checked) { errorInscripcion('Tienes que aceptar el tratamiento de datos.'); return; }
+    if (estado.inscripciones.some(function (x) { return x.dni === d.dni && x.estado === 'pagada'; })) { errorInscripcion('Ese DNI ya tiene una inscripción pagada.'); return; }
+
+    var ins = d;
+    ins.id = 'I' + Date.now();
+    ins.fecha = new Date().toISOString();
+    ins.aceptaCondiciones = new Date().toISOString();
+    ins.total = totalLineas(lineasImporte(d));
+    ins.estado = 'sin-enviar';
+    ins.numero = null; ins.idSolicitud = null; ins.urlPago = null;
+    // sustituye una solicitud anterior sin pagar del mismo DNI
+    estado.inscripciones = estado.inscripciones.filter(function (x) { return !(x.dni === d.dni && x.estado !== 'pagada'); });
     estado.inscripciones.push(ins);
-    estado.cola.push({ tipo: 'inscripcion', id: ins.id });
     guardar();
     mostrarFormulario = false;
-    f.reset();
-    pintarInscripcion();
-    window.scrollTo(0, 0);
-    toast('¡Inscripción registrada!');
-    procesarCola();
+    enviarSolicitud(ins, true);
+  }
+
+  /* Envía la solicitud al club y, si hay pasarela, abre el pago */
+  function enviarSolicitud(ins, irAPagar) {
+    if (!C.urlServidor) {
+      ins.estado = 'pendiente'; guardar(); pintarInscripcion(); window.scrollTo(0, 0);
+      if (C.modoPrueba) toast('Modo prueba: servidor sin configurar');
+      return;
+    }
+    if (!navigator.onLine) { pintarInscripcion(); toast('Necesitas conexión para enviar la inscripción'); return; }
+    var b = $('#boton-inscribir'); b.disabled = true; b.textContent = 'Enviando…';
+    var datos = JSON.parse(JSON.stringify(ins));
+    datos.accion = 'inscripcion'; datos.idLocal = ins.id; datos.urlApp = location.origin + location.pathname;
+    llamarServidor(datos).then(function (res) {
+      ins.estado = res.estado === 'pagada' ? 'pagada' : 'pendiente';
+      ins.idSolicitud = res.idSolicitud; ins.urlPago = res.urlPago || null; ins.total = res.total || ins.total;
+      if (res.numero) ins.numero = res.numero;
+      guardar(); pintarInscripcion(); window.scrollTo(0, 0);
+      if (irAPagar && ins.urlPago && ins.estado !== 'pagada') location.href = ins.urlPago;
+    }).catch(function (e) {
+      pintarInscripcion(); toast(e.message || 'No se pudo enviar. Inténtalo de nuevo.', 5000);
+    }).then(function () { b.disabled = false; b.textContent = 'Continuar al pago'; });
+  }
+
+  function pagarAhora() {
+    var ins = ultimaInscripcion(); if (!ins) return;
+    if (ins.estado === 'sin-enviar' || !ins.urlPago) { enviarSolicitud(ins, true); return; }
+    // el enlace de pago caduca: pedimos uno nuevo al servidor
+    enviarSolicitud(ins, true);
+  }
+
+  function comprobarPago(ins, silencioso) {
+    if (!ins || !ins.idSolicitud || !C.urlServidor) return Promise.resolve();
+    if (!silencioso) toast('Comprobando el pago…', 6000);
+    return llamarServidor({ accion: 'estadoPago', idSolicitud: ins.idSolicitud }).then(function (res) {
+      if (res.estado === 'pagada') {
+        ins.estado = 'pagada'; ins.numero = res.numero; guardar(); pintarInscripcion();
+        $('#toast').hidden = true;
+        modal('<h2>¡Inscripción confirmada!</h2><p style="font-size:20px">Nº <b>' + String(res.numero).padStart(3, '0') + '</b></p><p>Nos vemos en el ' + esc(C.evento.nombre) + '. Con tu DNI podrás entrar en la Ruta.</p>');
+      } else if (!silencioso) {
+        toast('Todavía no consta el pago. Si acabas de pagar, espera un minuto.', 5000);
+      }
+    }).catch(function () { if (!silencioso) toast('No se pudo comprobar ahora mismo'); });
+  }
+
+  /* Vuelta desde la pasarela de pago */
+  function volverDePago() {
+    var q = new URLSearchParams(location.search);
+    var pago = q.get('pago');
+    if (!pago) return;
+    history.replaceState(null, '', location.pathname + '#inscripcion');
+    ir('inscripcion', true);
+    var ins = ultimaInscripcion();
+    if (pago === 'ok') comprobarPago(ins, false);
+    else toast('Pago cancelado. Puedes volver a intentarlo cuando quieras.', 5000);
   }
 
   /* ------------------------------------------------------------------
@@ -650,7 +756,7 @@
     errorAcceso('');
     if (!dniValido(dni)) { errorAcceso('El DNI/NIE no es correcto. Revisa los números y la letra.'); return; }
     // 1) Inscrito desde este mismo móvil
-    var local = estado.inscripciones.filter(function (x) { return x.dni === dni; })[0];
+    var local = estado.inscripciones.filter(function (x) { return (x.dni === dni || x.acompDni === dni) && x.estado === 'pagada'; })[0];
     if (local) {
       entrarRuta({ nombre: local.nombre + ' ' + local.apellidos, dorsal: local.numero || 'P-' + dni.slice(-4), dni: dni, telefono: local.telefono });
       return;
@@ -739,13 +845,7 @@
      ------------------------------------------------------------------ */
   var enviando = false;
   function construirEnvio(item) {
-    if (item.tipo === 'inscripcion') {
-      var ins = estado.inscripciones.filter(function (x) { return x.id === item.id; })[0];
-      if (!ins) return Promise.resolve(null);
-      var d = JSON.parse(JSON.stringify(ins));
-      d.accion = 'inscripcion'; d.idLocal = ins.id; d.evento = C.evento.nombre; d.total = totalInscripcion(ins.conAcompanante);
-      return Promise.resolve(d);
-    }
+    if (item.tipo === 'inscripcion') return Promise.resolve(null); // las inscripciones ya no van por la cola
     var p = estado.participante || {};
     var base = { accion: item.tipo, nombre: p.nombre, dorsal: p.dorsal, dni: p.dni || '', telefono: p.telefono || '', evento: C.evento.nombre, total: TOTAL };
     if (item.tipo === 'registro') return Promise.resolve(base);
@@ -813,7 +913,9 @@
     window.addEventListener('popstate', function () { ir((location.hash || '#inicio').slice(1), true); });
 
     $('#form-inscripcion').addEventListener('submit', enviarInscripcion);
-    $('#con-acompanante').addEventListener('change', actualizarTotal);
+    $('#form-inscripcion').addEventListener('change', actualizarTotal);
+    $('#boton-pagar').addEventListener('click', pagarAhora);
+    $('#boton-comprobar-pago').addEventListener('click', function () { comprobarPago(ultimaInscripcion(), false); });
     $('#boton-nueva-inscripcion').addEventListener('click', function () { mostrarFormulario = true; pintarInscripcion(); window.scrollTo(0, 0); });
 
     $('#form-ruta').addEventListener('submit', accesoRuta);
@@ -861,7 +963,11 @@
     if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(function (e) { console.warn('SW', e); });
     if (navigator.storage && navigator.storage.persist) navigator.storage.persist();
 
+    var vieneDePago = !!new URLSearchParams(location.search).get('pago');
     ir((location.hash || '#inicio').slice(1), true);
+    volverDePago();
+    var pend = ultimaInscripcion();
+    if (pend && pend.estado === 'pendiente' && !vieneDePago) comprobarPago(pend, true);
     if (actual === 'ruta' && !$('#ruta-cuenta').innerHTML) pintarCuentaAtras($('#ruta-cuenta'), R.desbloqueo);
     cargarTrazado().then(function () { if (actual === 'ruta') pintarRuta(); });
     procesarCola();

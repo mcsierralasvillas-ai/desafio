@@ -88,50 +88,67 @@
         <button class="boton" data-ir="contacto">Contacto</button>
       </div>
 
-      <form id="form-inscripcion" class="tarjeta" autocomplete="on" hidden>
+      <form id="form-inscripcion" class="tarjeta" autocomplete="on" hidden novalidate>
         <h2>Inscripción</h2>
         <p class="suave" id="insc-intro"></p>
 
         <h3 class="seccion">Piloto</h3>
         <label>Nombre<input name="nombre" required autocomplete="given-name"></label>
         <label>Apellidos<input name="apellidos" required autocomplete="family-name"></label>
-        <label>DNI / NIE <span class="suave">(lo necesitarás para entrar en la ruta)</span><input name="dni" required autocapitalize="characters" autocomplete="off" placeholder="12345678Z"></label>
+        <label>DNI / NIE <span class="suave">(con él entrarás en la ruta)</span><input name="dni" required autocapitalize="characters" autocomplete="off" placeholder="12345678Z"></label>
         <label>Teléfono<input name="telefono" type="tel" required inputmode="tel" autocomplete="tel"></label>
         <label>Correo electrónico<input name="email" type="email" required autocomplete="email"></label>
         <label>Localidad<input name="localidad" autocomplete="address-level2"></label>
-        <label>Moto (marca y modelo)<input name="moto" placeholder="Ej.: Yamaha Tracer 9"></label>
+        <label>Moto (marca y modelo)<input name="moto" required placeholder="Ej.: Yamaha Tracer 9"></label>
         <label>Talla de camiseta<select name="talla" required></select></label>
 
         <h3 class="seccion">Acompañante</h3>
-        <label class="casilla"><input type="checkbox" name="conAcompanante" id="con-acompanante"> Voy con acompañante</label>
+        <label class="casilla"><input type="checkbox" name="conAcompanante" id="con-acompanante"> <span>Voy con acompañante (+<span class="precio-acomp"></span>)</span></label>
         <div id="bloque-acompanante" hidden>
           <label>Nombre y apellidos del acompañante<input name="acompNombre"></label>
+          <label>DNI / NIE del acompañante<input name="acompDni" autocapitalize="characters" autocomplete="off" placeholder="12345678Z"></label>
           <label>Talla de camiseta del acompañante<select name="acompTalla"></select></label>
         </div>
 
-        <label class="casilla"><input type="checkbox" name="acepta" required> <span id="texto-condiciones"></span></label>
+        <div id="bloque-cena">
+          <h3 class="seccion">Gran cena de recepción</h3>
+          <div class="cena-aviso" id="cena-texto"></div>
+          <label class="casilla"><input type="checkbox" name="cenaPiloto" id="cena-piloto"> <span>El piloto viene a la cena (+<span class="precio-cena"></span>)</span></label>
+          <label class="casilla" id="fila-cena-acomp" hidden><input type="checkbox" name="cenaAcomp" id="cena-acomp"> <span>El acompañante viene a la cena (+<span class="precio-cena"></span>)</span></label>
+        </div>
 
+        <h3 class="seccion">Resumen</h3>
+        <div class="desglose" id="insc-desglose"></div>
         <div class="total">Total: <b id="insc-total"></b></div>
-        <button class="boton boton-principal" type="submit" id="boton-inscribir">Enviar inscripción</button>
+
+        <h3 class="seccion">Condiciones y responsabilidad</h3>
+        <div class="condiciones" id="texto-condiciones" tabindex="0"></div>
+        <label class="casilla"><input type="checkbox" name="acepta" id="acepta-condiciones"> <span>He leído y acepto las <b>condiciones de participación y exención de responsabilidad</b>, en mi nombre y en el de mi acompañante.</span></label>
+        <label class="casilla"><input type="checkbox" name="aceptaDatos" id="acepta-datos"> <span id="texto-datos"></span></label>
+
+        <div id="insc-error" class="acceso-error" hidden></div>
+        <button class="boton boton-principal" type="submit" id="boton-inscribir">Continuar al pago</button>
+        <p class="suave centrado" id="texto-metodos"></p>
       </form>
 
       <div id="insc-hecha" hidden>
-        <div class="tarjeta tarjeta-ok">
-          <div class="etiqueta">Inscripción registrada</div>
+        <div class="tarjeta" id="insc-tarjeta-estado">
+          <div class="etiqueta" id="insc-etiqueta"></div>
           <div class="grande" id="insc-numero"></div>
           <div id="insc-resumen"></div>
           <div class="estado-pago" id="insc-estado-envio"></div>
         </div>
         <div class="tarjeta" id="bloque-pago">
           <h3>Pago de la inscripción</h3>
+          <div class="desglose" id="pago-desglose"></div>
           <div class="total">Importe: <b id="pago-total"></b></div>
-          <a class="boton boton-principal" id="boton-pagar-tarjeta" target="_blank" rel="noopener" hidden>Pagar con tarjeta</a>
-          <div id="pago-bizum" hidden></div>
-          <div id="pago-transferencia" hidden></div>
-          <p class="suave" id="pago-concepto"></p>
-          <p class="suave" id="pago-sin-configurar" hidden>El club indicará en breve la forma de pago. Te llegará la información por teléfono o correo.</p>
+          <button class="boton boton-principal" id="boton-pagar">Pagar ahora</button>
+          <p class="suave centrado" id="pago-metodos"></p>
+          <div id="pago-manual" hidden></div>
+          <button class="boton" id="boton-comprobar-pago">Ya he pagado · comprobar</button>
+          <p class="aviso-validez">La inscripción <b>no es válida hasta que se completa el pago</b>.</p>
         </div>
-        <button class="boton" data-ir="ruta">Ir a la ruta</button>
+        <button class="boton" data-ir="ruta" id="boton-ir-ruta-insc">Ir a la ruta</button>
         <button class="enlace" id="boton-nueva-inscripcion">Hacer otra inscripción desde este móvil</button>
       </div>
     </section>

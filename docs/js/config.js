@@ -97,19 +97,43 @@ window.CONFIG = {
   },
 
   // ----------------------------------------------------------- INSCRIPCIÓN
+  // Los precios se comprueban también en el servidor (servidor-google/Codigo.gs).
+  // Si cambias un precio aquí, cámbialo también allí (apartado PRECIOS).
   inscripcion: {
     abierta: true,
     precioPiloto: 25,
     precioAcompanante: 20,
     tallas: ['S', 'M', 'L', 'XL', 'XXL', '3XL'],
-    // Enlaces de pago con tarjeta (Stripe Payment Links u otra pasarela).
-    // Mientras estén vacíos, se muestran solo Bizum / transferencia.
-    enlacePagoPiloto: '',
-    enlacePagoConAcompanante: '',
-    bizum: '',            // COMPLETAR: teléfono de Bizum del club
-    iban: '',             // COMPLETAR: cuenta del club
+
+    cena: {
+      activa: true,
+      precio: 20,     // por persona
+      texto: 'El sábado por la noche celebraremos una <b>gran cena de recepción</b> para todos los participantes. El lugar se anunciará próximamente. <b>Menú cerrado: 20 € por persona.</b> Marca quién viene y se sumará al pago.'
+    },
+
+    // Formas de pago que se muestran al participante
+    metodos: 'Pago seguro con tarjeta, Apple Pay, Google Pay o Bizum.',
+
+    // Pago manual (solo se usa si el servidor no tiene configurado Stripe)
+    bizum: '',            // COMPLETAR si se quiere: teléfono de Bizum del club
+    iban: '',             // COMPLETAR si se quiere: cuenta del club
     titular: 'Motorclub Sierra Las Villas',
-    condiciones: 'Acepto las normas del evento y que la organización trate mis datos solo para gestionar la inscripción.'
+
+    textoDatos: 'Acepto que el Motorclub Sierra Las Villas trate mis datos y los de mi acompañante solo para gestionar el evento. Puedo ejercer mis derechos escribiendo a mcsierralasvillas@gmail.com.',
+
+    // CONDICIONES DE PARTICIPACIÓN Y EXENCIÓN DE RESPONSABILIDAD
+    // Modelo orientativo: conviene que lo revise el asesor o la aseguradora del club.
+    condiciones: [
+      ['1. Naturaleza del evento', 'El Motor Raid Sierra Las Villas es una actividad recreativa y turística, sin carácter competitivo. No es una carrera ni una prueba de velocidad o regularidad. El recorrido transcurre por vías abiertas al tráfico, donde cada participante circula como un usuario más de la vía.'],
+      ['2. Normas de circulación', 'El participante se compromete a cumplir en todo momento la Ley sobre Tráfico, Circulación de Vehículos a Motor y Seguridad Vial y el Reglamento General de Circulación, respetando las señales, los límites de velocidad y las indicaciones de los agentes de la autoridad y de la organización. La organización no controla ni garantiza el estado de las carreteras del recorrido.'],
+      ['3. Documentación y estado de la motocicleta', 'El participante declara que tiene el permiso de conducción en vigor adecuado a su motocicleta; que la motocicleta está matriculada, tiene la ITV en vigor y un seguro obligatorio en vigor; y que se encuentra en condiciones técnicas óptimas (frenos, neumáticos, luces y demás elementos) para realizar el recorrido. Piloto y acompañante usarán casco homologado y equipación de protección adecuada.'],
+      ['4. Estado físico', 'El participante declara encontrarse en condiciones físicas adecuadas para realizar el recorrido y se compromete a no conducir bajo los efectos del alcohol, drogas o medicamentos que afecten a la conducción.'],
+      ['5. Responsabilidad', 'El participante asume voluntariamente los riesgos propios de la circulación en motocicleta. En la medida en que la ley lo permite, el Motorclub Sierra Las Villas, sus organizadores, voluntarios y colaboradores no se hacen responsables de los accidentes, lesiones, daños personales o materiales que el participante o su acompañante sufran o causen a sí mismos, a otras personas o a bienes durante el recorrido, que serán responsabilidad del conductor y de su compañía aseguradora. El participante renuncia a reclamar al club por estos hechos. Tampoco se responsabiliza el club de pérdidas, robos o averías de los vehículos y objetos personales.'],
+      ['6. Acompañante', 'El piloto que inscribe a un acompañante se compromete a informarle de estas condiciones y declara que las acepta.'],
+      ['7. Cambios y cancelación', 'La organización puede modificar el recorrido, los horarios o suspender la actividad por razones meteorológicas (lluvia, riesgo de hielo en la calzada), de seguridad o de fuerza mayor. La cuota de inscripción no se devolverá salvo que el evento sea cancelado por la organización.'],
+      ['8. Imagen', 'El participante autoriza al club a usar las fotografías del sellado y las tomadas durante el evento en su web, app y redes sociales para la difusión del Motor Raid.'],
+      ['9. Validez de la inscripción', 'La inscripción solo es válida una vez completado el pago. Las inscripciones sin pagar no reservan plaza.']
+    ]
   },
 
   // ----------------------------------------------------------------- RUTA
