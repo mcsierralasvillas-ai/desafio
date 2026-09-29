@@ -8,11 +8,9 @@
 
   var C = window.CONFIG;
   var R = C.ruta;
-  var VERSION_APP = '2.2.0';
+  var VERSION_APP = '2.3.0';
   var CLAVE = 'mcslv_estado_v2';
   var TOTAL = R.puntos.length;
-  var LEAFLET_JS = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
-  var LEAFLET_CSS = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
 
   function $(s) { return document.querySelector(s); }
   function $$(s) { return Array.prototype.slice.call(document.querySelectorAll(s)); }
@@ -137,6 +135,9 @@
     raid: { titulo: 'Raid 2027', padre: 'inicio' },
     inscripcion: { titulo: 'Inscripción', padre: 'raid' },
     ruta: { titulo: 'Ruta', padre: 'raid' },
+    carnet: { titulo: 'Carnet fotográfico', padre: 'ruta' },
+    puntos: { titulo: 'Puntos de ruta', padre: 'ruta' },
+    ayuda: { titulo: 'Ayuda', padre: 'ruta' },
     evento: { titulo: 'Información del evento', padre: 'raid' },
     club: { titulo: 'El club', padre: 'inicio' },
     socio: { titulo: 'Socio', padre: 'inicio' },
@@ -165,6 +166,9 @@
     if (actual === 'raid') pintarRaid();
     if (actual === 'inscripcion') pintarInscripcion();
     if (actual === 'ruta') pintarRuta();
+    if (actual === 'carnet') pintarCarnet();
+    if (actual === 'puntos') pintarPuntos();
+    if (actual === 'ayuda') pintarAyuda();
     if (actual === 'evento') pintarEvento();
     if (actual === 'club') pintarClub();
     if (actual === 'socio') pintarSocio();
@@ -468,7 +472,8 @@
   }
 
   /* ------------------------------------------------------------------
-     RUTA: progreso, GPS, mapa, sellado
+     RUTA: acceso con DNI, menú del participante, carnet fotográfico
+     y puntos de ruta (se van desvelando al sellar cada foto)
      ------------------------------------------------------------------ */
   function distancia(a, b) {
     var Rt = 6371000, rad = Math.PI / 180;
@@ -478,29 +483,25 @@
   }
   function textoDistancia(m) { return m < 1000 ? Math.round(m) + ' m' : (m / 1000).toFixed(m < 10000 ? 1 : 0).replace('.', ',') + ' km'; }
   function hora(iso) { return new Date(iso).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' }); }
+  function dorsalTexto(n) { return /^\d+$/.test(String(n)) ? String(n).padStart(3, '0') : String(n); }
 
+  function esDemo() { return !!(estado.participante && estado.participante.demo); }
   function numSellos() { return R.puntos.filter(function (p) { return estado.sellos[p.id]; }).length; }
   function indiceActual() { var i = 0; while (i < TOTAL && estado.sellos[R.puntos[i].id]) i++; return i; }
   function completado() { return indiceActual() >= TOTAL; }
   function destinoActual() { var i = indiceActual(); return i < TOTAL ? R.puntos[i] : R.llegada; }
-  function rutaDesbloqueada() { return C.modoPrueba || Date.now() >= new Date(R.desbloqueo).getTime(); }
+  function rutaDesbloqueada() { return C.modoPrueba || esDemo() || Date.now() >= new Date(R.desbloqueo).getTime(); }
   function paradas() { return [R.salida].concat(R.puntos, [R.llegada]); }
-  function tramosVisibles() {
-    var hasta = (R.modo === 'completa' || estado.verCompleta) ? TOTAL : indiceActual();
-    var r = []; for (var i = 0; i <= hasta; i++) r.push(i); return r;
-  }
+  function ultimoTramoVisible() { return (R.modo === 'completa' || estado.verCompleta) ? TOTAL : indiceActual(); }
+  function simulacionPermitida() { return C.modoPrueba || esDemo(); }
 
-  var trazado = null;
-  function cargarTrazado() {
-    return fetch('ruta-trazado.json', { cache: 'no-cache' })
-      .then(function (r) { if (!r.ok) throw 0; return r.json(); })
-      .then(function (j) { if (j && Array.isArray(j.tramos) && j.tramos.length === TOTAL + 1) trazado = j.tramos; })
-      .catch(function () { trazado = null; });
-  }
-  function lineaTramo(i) {
-    if (trazado && trazado[i] && trazado[i].length > 1) return trazado[i];
-    var p = paradas();
-    return [[p[i].lat, p[i].lng], [p[i + 1].lat, p[i + 1].lng]];
+  /* Enlace de Google Maps de un tramo (0 = salida → punto 1) */
+  function enlaceTramo(i) {
+    var p = paradas(), a = p[i], b = p[i + 1];
+    if (b.enlaceMaps) return b.enlaceMaps;
+    var u = 'https://www.google.com/maps/dir/?api=1&travelmode=driving&origin=' + a.lat + ',' + a.lng + '&destination=' + b.lat + ',' + b.lng;
+    if (b.via && b.via.length) u += '&waypoints=' + encodeURIComponent(b.via.map(function (v) { return v[0] + ',' + v[1]; }).join('|'));
+    return u;
   }
 
   /* GPS */
@@ -509,125 +510,134 @@
     if (vigilancia !== null || !('geolocation' in navigator)) return;
     vigilancia = navigator.geolocation.watchPosition(function (p) {
       posicion = { lat: p.coords.latitude, lng: p.coords.longitude, precision: p.coords.accuracy, t: Date.now() };
-      errorGps = null; pintarPosicion();
+      errorGps = null; pintarSellar();
     }, function (e) {
-      errorGps = e.code === 1 ? 'Permiso de ubicación denegado' : 'Buscando señal GPS…'; pintarPosicion();
+      errorGps = e.code === 1 ? 'Permiso de ubicación denegado' : 'Buscando señal GPS…'; pintarSellar();
     }, { enableHighAccuracy: true, maximumAge: 5000, timeout: 30000 });
   }
   function posicionReciente() { return posicion && (Date.now() - posicion.t) < 120000 ? posicion : null; }
 
-  /* Librería del mapa: solo se descarga al entrar en la ruta */
-  var promesaLeaflet = null;
-  function cargarLeaflet() {
-    if (window.L) return Promise.resolve(true);
-    if (promesaLeaflet) return promesaLeaflet;
-    promesaLeaflet = new Promise(function (ok) {
-      var css = document.createElement('link');
-      css.rel = 'stylesheet'; css.href = LEAFLET_CSS; css.crossOrigin = '';
-      document.head.appendChild(css);
-      var s = document.createElement('script');
-      s.src = LEAFLET_JS; s.crossOrigin = ''; s.async = true;
-      s.onload = function () { ok(true); };
-      s.onerror = function () { promesaLeaflet = null; ok(false); };
-      document.head.appendChild(s);
-      setTimeout(function () { ok(!!window.L); }, 15000);
-    });
-    return promesaLeaflet;
-  }
-
-  var mapa = null, capaRuta = null, marcaYo = null, circuloYo = null, encuadrado = false;
-  function icono(clase, texto) {
-    return L.divIcon({ className: '', html: '<div class="marcador ' + clase + '">' + esc(texto) + '</div>', iconSize: [30, 30], iconAnchor: [15, 15] });
-  }
-  function pintarMapa() {
-    if (!window.L) {
-      $('#mapa').hidden = true; $('#mapa-no-disponible').hidden = false;
-      cargarLeaflet().then(function (ok) { if (ok && actual === 'ruta') { $('#mapa').hidden = false; $('#mapa-no-disponible').hidden = true; pintarMapa(); } });
-      return;
-    }
-    $('#mapa').hidden = false; $('#mapa-no-disponible').hidden = true;
-    if (!mapa) {
-      mapa = L.map('mapa', { zoomControl: false });
-      L.control.zoom({ position: 'bottomright' }).addTo(mapa);
-      L.tileLayer(R.mapa.teselas, { maxZoom: R.mapa.zoomMax, attribution: R.mapa.atribucion }).addTo(mapa);
-      capaRuta = L.layerGroup().addTo(mapa);
-      mapa.setView([R.salida.lat, R.salida.lng], 10);
-    }
-    setTimeout(function () { mapa.invalidateSize(); }, 60);
-    capaRuta.clearLayers();
-    var act = indiceActual(), p = paradas();
-    tramosVisibles().forEach(function (i) {
-      var hecho = i < act, enCurso = i === act;
-      if (!hecho) L.polyline(lineaTramo(i), { color: '#000', weight: enCurso ? 9 : 7, opacity: 0.35 }).addTo(capaRuta);
-      L.polyline(lineaTramo(i), {
-        color: hecho ? '#2fb56a' : (enCurso ? '#e3060b' : '#ffd400'),
-        weight: enCurso ? 6 : 4, opacity: hecho ? 0.7 : 1,
-        dashArray: (!trazado && !hecho) ? '8 8' : null
-      }).addTo(capaRuta);
-    });
-    L.marker([R.salida.lat, R.salida.lng], { icon: icono('marcador-salida', 'S') }).bindPopup(esc(R.salida.nombre)).addTo(capaRuta);
-    tramosVisibles().forEach(function (i) {
-      var d = p[i + 1], meta = i === TOTAL;
-      var clase = meta ? 'marcador-salida' : (i < act ? 'marcador-hecho' : (i === act ? 'marcador-siguiente' : 'marcador-pendiente'));
-      L.marker([d.lat, d.lng], { icon: icono(clase, meta ? '🏁' : String(i + 1)), zIndexOffset: i === act ? 1000 : 0 })
-        .bindPopup('<b>' + esc(d.nombre) + '</b>' + (d.lugar ? '<br>' + esc(d.lugar) : '')).addTo(capaRuta);
-    });
-    if (!encuadrado) { encuadrarTramo(); encuadrado = true; }
-    pintarPosicion();
-  }
-  function encuadrarTramo() {
-    if (!mapa) return;
-    var b = L.latLngBounds(lineaTramo(Math.min(indiceActual(), TOTAL)));
-    var pos = posicionReciente(); if (pos) b.extend([pos.lat, pos.lng]);
-    mapa.fitBounds(b, { padding: [40, 40], maxZoom: 15 });
-  }
-  function pintarPosicion() {
-    pintarPanel();
-    if (!mapa || !window.L) return;
-    var pos = posicionReciente(); if (!pos) return;
-    var ll = [pos.lat, pos.lng];
-    if (!marcaYo) {
-      marcaYo = L.marker(ll, { icon: L.divIcon({ className: '', html: '<div class="yo"></div>', iconSize: [18, 18], iconAnchor: [9, 9] }), zIndexOffset: 2000 }).addTo(mapa);
-      circuloYo = L.circle(ll, { radius: pos.precision, color: '#1e88ff', weight: 1, fillOpacity: 0.08 }).addTo(mapa);
-    } else { marcaYo.setLatLng(ll); circuloYo.setLatLng(ll).setRadius(pos.precision); }
-  }
-
   function puedeSellar() {
     if (completado()) return { si: false };
-    if (C.modoPrueba) return { si: true };
+    if (simulacionPermitida()) return { si: true };
     var pos = posicionReciente();
     if (!pos) return { si: false, motivo: errorGps || 'Buscando señal GPS…' };
     var d = distancia(pos, destinoActual());
     return { si: d <= R.radioSelladoMetros + Math.min(pos.precision, 100), distancia: d };
   }
-  function pintarPanel() {
-    if (actual !== 'ruta' || $('#ruta-activa').hidden) return;
-    var i = indiceActual(), dest = destinoActual(), fin = completado();
-    $('#destino-etiqueta').textContent = fin ? '¡Desafío completado! Rumbo a meta' : 'Punto ' + (i + 1) + ' de ' + TOTAL;
-    $('#destino-nombre').textContent = dest.nombre;
-    $('#destino-lugar').textContent = dest.lugar || '';
-    $('#destino-pista').textContent = fin ? 'Te esperamos para entregarte tu diploma.' : (dest.pista || '');
-    $('#boton-navegar').href = 'https://www.google.com/maps/dir/?api=1&travelmode=driving&destination=' + dest.lat + ',' + dest.lng;
-    var pos = posicionReciente(), el = $('#destino-distancia'), e = puedeSellar();
-    if (pos) {
-      var d = distancia(pos, dest);
-      var enPunto = !fin && d <= R.radioSelladoMetros + Math.min(pos.precision, 100);
-      el.textContent = enPunto ? '¡Estás en el punto! Ya puedes sellar' : 'A ' + textoDistancia(d) + ' en línea recta';
-      el.classList.toggle('cerca', enPunto);
-    } else { el.textContent = errorGps || 'Buscando señal GPS…'; el.classList.remove('cerca'); }
-    $('#boton-sellar').hidden = fin;
-    $('#boton-sellar').disabled = !e.si;
-    $('#boton-sin-gps').hidden = fin;
-    $('#boton-simular').hidden = !C.modoPrueba || fin;
+
+  /* Guardas: sin participante, a la pantalla de acceso */
+  function exigirParticipante() {
+    if (estado.participante) return true;
+    setTimeout(function () { ir('ruta'); }, 0);
+    return false;
   }
 
+  /* ---- Menú de la ruta ---- */
+  function pintarRuta() {
+    var p = estado.participante;
+    $('#form-ruta').hidden = !!p;
+    $('#ruta-home').hidden = !p;
+    if (!p) {
+      var ins = ultimaInscripcion(), f = $('#form-ruta');
+      if (ins && ins.estado === 'pagada' && !f.dni.value) f.dni.value = ins.dni || '';
+      return;
+    }
+    $('#ficha-nombre').textContent = p.nombre;
+    $('#ficha-dni').textContent = 'DNI ' + (p.dni ? p.dni.slice(0, -4).replace(/./g, '•') + p.dni.slice(-4) : '');
+    $('#ficha-extra').textContent = [p.moto, p.acompanante ? 'Acompañante: ' + p.acompanante : '', p.telefono].filter(Boolean).join(' · ');
+    $('#ficha-dorsal').textContent = dorsalTexto(p.dorsal);
+    $('#demo-aviso').hidden = !p.demo;
+    $('#ruta-logo').src = R.logo || 'icons/logo.png';
+    $('#ruta-reto').textContent = C.evento.reto;
+    var n = numSellos();
+    $('#home-progreso').style.width = (n / TOTAL * 100) + '%';
+    $('#home-progreso-texto').textContent = completado() ? '¡Desafío completado!' : n + ' de ' + TOTAL + ' sellos';
+    var desbloq = rutaDesbloqueada();
+    $('#ruta-bloqueada').hidden = desbloq;
+    if (!desbloq) pintarCuentaAtras($('#ruta-cuenta'), R.desbloqueo);
+    $$('#ruta-home .menu-grande .boton-menu').forEach(function (b) { b.disabled = !desbloq; });
+    $('#home-sub-carnet').textContent = completado() ? 'Completo ✓' : 'Siguiente foto: punto ' + (indiceActual() + 1);
+    $('#home-sub-puntos').textContent = completado() ? 'Rumbo a meta' : 'Tramo ' + (indiceActual() + 1) + ' de ' + (TOTAL + 1);
+    pintarCola();
+  }
+
+  /* ---- Carnet fotográfico ---- */
+  function pintarCarnet() {
+    if (!exigirParticipante()) return;
+    iniciarGps();
+    var p = estado.participante, n = numSellos(), act = indiceActual();
+    $('#carnet-nombre').textContent = p.nombre + ' · Dorsal ' + dorsalTexto(p.dorsal);
+    $('#progreso-valor').style.width = (n / TOTAL * 100) + '%';
+    $('#progreso-texto').textContent = n + ' de ' + TOTAL + ' sellos';
+    $('#enhorabuena').hidden = !completado();
+    if (completado()) $('#enhorabuena').innerHTML = htmlEnhorabuena();
+    var rej = $('#rejilla-carnet'); rej.innerHTML = '';
+    R.puntos.forEach(function (pt, i) {
+      if (i > act && !estado.verCompleta) return; // solo se ven los puntos ya desvelados
+      var s = estado.sellos[pt.id];
+      var el = document.createElement(s ? 'div' : 'button');
+      el.className = 'casilla-foto ' + (s ? 'hecha' : (i === act ? 'siguiente' : ''));
+      el.innerHTML = '<span class="casilla-num">' + (i + 1) + '</span>' +
+        (s ? '<span class="casilla-pie"><b>' + esc(pt.nombre) + '</b>' + hora(s.hora) + (s.subido ? ' · ✓ enviado' : (esDemo() ? ' · demo' : ' · ⏳ pendiente')) + '</span>'
+           : '<span class="camara">📷</span><span class="casilla-pie"><b>' + esc(pt.nombre) + '</b><span class="pulsa">Pulsa para sellar</span></span>');
+      if (!s && i === act) el.addEventListener('click', pulsarSellar);
+      rej.appendChild(el);
+      if (s) fotos.leer(pt.id).then(function (u) { if (u) el.style.backgroundImage = 'url("' + u + '")'; });
+    });
+    pintarSellar();
+  }
+  function pintarSellar() {
+    if (actual !== 'carnet' || !estado.participante) return;
+    var fin = completado(), dest = destinoActual(), i = indiceActual();
+    $('#bloque-sellar').hidden = fin;
+    if (fin) return;
+    $('#sellar-etiqueta').textContent = 'Punto ' + (i + 1) + ' de ' + TOTAL;
+    $('#sellar-nombre').textContent = dest.nombre;
+    $('#sellar-pista').textContent = dest.pista || '';
+    var pos = posicionReciente(), el = $('#sellar-distancia'), e = puedeSellar();
+    if (pos) {
+      var d = distancia(pos, dest), enPunto = d <= R.radioSelladoMetros + Math.min(pos.precision, 100);
+      el.textContent = enPunto ? '¡Estás en el punto! Ya puedes sellar' : 'Estás a ' + textoDistancia(d) + ' en línea recta';
+      el.classList.toggle('cerca', enPunto);
+    } else { el.textContent = errorGps || 'Buscando señal GPS…'; el.classList.remove('cerca'); }
+    $('#boton-sellar').disabled = !e.si;
+    $('#boton-simular').hidden = !simulacionPermitida();
+  }
+
+  /* ---- Puntos de ruta ---- */
+  function pintarPuntos() {
+    if (!exigirParticipante()) return;
+    var p = paradas(), act = indiceActual(), hasta = ultimoTramoVisible(), html = [];
+    for (var i = 0; i <= hasta && i <= TOTAL; i++) {
+      var dest = p[i + 1], meta = i === TOTAL, hecho = !meta && estado.sellos[dest.id];
+      html.push('<a class="punto' + (hecho ? ' hecho' : '') + (meta ? ' meta' : '') + '" href="' + esc(enlaceTramo(i)) + '" target="_blank" rel="noopener">' +
+        '<span class="punto-num">' + (meta ? '🏁' : (i + 1)) + '</span><span>' +
+        '<span class="punto-tramo">Tramo ' + (i + 1) + ' · ' + esc(p[i].nombre) + ' →</span>' +
+        '<span class="punto-nombre" style="display:block">' + esc(dest.nombre) + '</span>' +
+        '<span class="punto-info" style="display:block">' + esc(dest.lugar || (meta ? 'Llegada y entrega de diplomas' : '')) +
+        (hecho ? ' · ✓ sellado a las ' + hora(estado.sellos[dest.id].hora) : (i === act ? ' · siguiente' : '')) + '</span>' +
+        '<span class="punto-abrir">Abrir en Google Maps ↗</span></span></a>');
+    }
+    var ocultos = TOTAL - Math.min(hasta, TOTAL);
+    if (ocultos > 0) html.push('<div class="punto-oculto">🔒 ' + ocultos + ' tramo' + (ocultos > 1 ? 's' : '') + ' más por desvelar · sella la foto del punto ' + (act + 1) + '</div>');
+    $('#lista-puntos').innerHTML = html.join('');
+  }
+
+  function pintarAyuda() {
+    $('#ayuda-final').textContent = C.evento.lugarFinal;
+    $('#ayuda-telefonos').innerHTML = htmlTelefonos();
+    $('#boton-emergencia').hidden = R.modo === 'completa';
+    $('#boton-emergencia').textContent = estado.verCompleta ? 'Ocultar ruta completa' : 'Ver ruta completa (organización)';
+  }
+
+  /* ---- Sellado ---- */
   var selloPendiente = null;
   function prepararSello(sinGps, simulado) {
     var pos = posicionReciente(), dest = destinoActual();
     selloPendiente = {
       punto: dest, lat: pos ? pos.lat : null, lng: pos ? pos.lng : null,
-      precision: pos ? Math.round(pos.precision) : null,
-      distancia: pos ? Math.round(distancia(pos, dest)) : null,
+      precision: pos ? Math.round(pos.precision) : null, distancia: pos ? Math.round(distancia(pos, dest)) : null,
       sinGps: sinGps || !pos, simulado: !!simulado
     };
     var entrada = $('#entrada-foto'); entrada.value = ''; entrada.click();
@@ -635,7 +645,7 @@
   function pulsarSellar() {
     var e = puedeSellar();
     if (!e.si) { toast(e.distancia ? 'Aún estás a ' + textoDistancia(e.distancia) + ' del punto' : (e.motivo || 'Sin GPS')); return; }
-    prepararSello(false, false);
+    prepararSello(false, simulacionPermitida() && !posicionReciente());
   }
   function pulsarSinGps() {
     modal('<h2>¿Problemas con el GPS?</h2><p>Si estás en el punto y el móvil no lo detecta, puedes sellar igualmente. La organización revisará la foto.</p>', [
@@ -646,8 +656,7 @@
   function pulsarSimular() {
     var d = destinoActual();
     posicion = { lat: d.lat + 0.0005, lng: d.lng + 0.0005, precision: 15, t: Date.now() };
-    pintarPosicion();
-    prepararSello(false, true);
+    pintarSellar(); prepararSello(false, true);
   }
   function comprimirFoto(archivo, lado, calidad) {
     return new Promise(function (ok, mal) {
@@ -672,15 +681,16 @@
       var p = datos.punto;
       return fotos.guardar(p.id, dataUrl).then(function () {
         estado.sellos[p.id] = { hora: new Date().toISOString(), lat: datos.lat, lng: datos.lng, precision: datos.precision, distancia: datos.distancia, sinGps: datos.sinGps, simulado: datos.simulado, subido: false };
-        estado.cola.push({ tipo: 'sello', id: p.id });
-        guardar(); encuadrado = false;
-        $('#toast').hidden = true;
-        pintar();
+        if (!esDemo()) estado.cola.push({ tipo: 'sello', id: p.id });
+        guardar(); $('#toast').hidden = true; pintar();
         if (completado()) {
-          modal(htmlEnhorabuena(), [{ texto: 'Ver ruta a meta', principal: true }, { texto: 'Ver mi carnet', accion: function () { elegirPestana('carnet'); } }]);
+          modal(htmlEnhorabuena(), [{ texto: 'Ver ruta a meta', principal: true, accion: function () { ir('puntos'); } }, { texto: 'Ver mi carnet' }]);
         } else {
+          var sig = destinoActual();
           modal('<h2>¡Sello ' + numSellos() + ' de ' + TOTAL + '!</h2><img class="modal-foto" src="' + dataUrl + '" alt=""><p>' + esc(p.nombre) +
-            ' conseguido.</p><p>Nuevo tramo desbloqueado:<br><b style="font-size:20px">' + esc(destinoActual().nombre) + '</b></p>', [{ texto: 'Ver el siguiente tramo', principal: true }]);
+            ' conseguido.</p><p>Nuevo punto desbloqueado:<br><b style="font-size:20px">' + esc(sig.nombre) + '</b></p>',
+            [{ texto: 'Abrir el tramo en Google Maps', principal: true, accion: function () { window.open(enlaceTramo(indiceActual()), '_blank'); } },
+             { texto: 'Ver puntos de ruta', accion: function () { ir('puntos'); } }, { texto: 'Seguir en el carnet' }]);
         }
         procesarCola();
       });
@@ -692,152 +702,50 @@
       '<p>' + TOTAL + ' de ' + TOTAL + ' sellos. Pon rumbo a <b>' + esc(C.evento.lugarFinal) + '</b>: te esperamos para entregarte tu diploma.</p><p class="suave">Enseña tu carnet al llegar.</p>';
   }
 
-  /* Pantalla Ruta */
-  var pestana = 'mapa';
-  function elegirPestana(p) { pestana = p; pintarRuta(); }
-  function pintarRuta() {
-    var reg = !!estado.participante;
-    $('#form-ruta').hidden = reg;
-    $('.pestanas').hidden = !reg;
-    $$('.pestana').forEach(function (b) { b.classList.toggle('activa', b.getAttribute('data-pestana') === pestana); });
-    ['mapa', 'carnet', 'ayuda'].forEach(function (t) { $('#t-' + t).hidden = !reg || pestana !== t; });
-    if (!reg) {
-      var ins = ultimaInscripcion(), f = $('#form-ruta');
-      if (ins && !f.dni.value) f.dni.value = ins.dni || '';
-      return;
-    }
-    if (pestana === 'mapa') {
-      var desbloq = rutaDesbloqueada();
-      $('#ruta-bloqueada').hidden = desbloq;
-      $('#ruta-activa').hidden = !desbloq;
-      if (desbloq) { iniciarGps(); pintarMapa(); pintarPanel(); }
-      pintarOffline(); pintarCola();
-    }
-    if (pestana === 'carnet') pintarCarnet();
-    if (pestana === 'ayuda') {
-      $('#ayuda-final').textContent = C.evento.lugarFinal;
-      $('#ayuda-telefonos').innerHTML = htmlTelefonos();
-      $('#boton-emergencia').hidden = R.modo === 'completa';
-      $('#boton-emergencia').textContent = estado.verCompleta ? 'Ocultar ruta completa' : 'Ver ruta completa (organización)';
-    }
-  }
-  function pintarCarnet() {
-    var p = estado.participante, n = numSellos();
-    $('#carnet-nombre').textContent = p.nombre + ' · Nº ' + p.dorsal;
-    $('#progreso-valor').style.width = (n / TOTAL * 100) + '%';
-    $('#progreso-texto').textContent = n + ' de ' + TOTAL + ' sellos';
-    $('#enhorabuena').hidden = !completado();
-    if (completado()) $('#enhorabuena').innerHTML = htmlEnhorabuena();
-    var rej = $('#rejilla-sellos'); rej.innerHTML = '';
-    R.puntos.forEach(function (pt, i) {
-      var s = estado.sellos[pt.id];
-      var visible = s || (rutaDesbloqueada() && (R.modo === 'completa' || estado.verCompleta || i <= indiceActual()));
-      var div = document.createElement('div');
-      div.className = 'sello';
-      div.innerHTML = '<div class="sello-foto">' + (s ? '' : (i + 1)) + '</div><div class="sello-info"><div class="sello-num">SELLO ' + (i + 1) + '</div>' +
-        '<div class="sello-nombre">' + (visible ? esc(pt.nombre) : '¿? Sorpresa') + '</div>' +
-        (s ? '<div class="sello-hora">' + hora(s.hora) + (s.sinGps ? ' · sin GPS' : '') + '</div><div class="sello-estado ' + (s.subido ? 'ok">✓ Enviado' : 'pte">⏳ Pendiente de envío') + '</div>'
-          : '<div class="sello-hora">Pendiente</div>') + '</div>';
-      rej.appendChild(div);
-      if (s) fotos.leer(pt.id).then(function (u) { if (u) div.querySelector('.sello-foto').style.backgroundImage = 'url("' + u + '")'; });
-    });
-  }
-  /* Acceso a la ruta con el DNI de la inscripción */
+  /* ---- Acceso con DNI ---- */
   function errorAcceso(html) { var e = $('#acceso-error'); e.innerHTML = html; e.hidden = !html; }
   function entrarRuta(datos) {
-    estado.participante = { nombre: datos.nombre, dorsal: String(datos.dorsal), dni: datos.dni, telefono: datos.telefono || '', alta: new Date().toISOString() };
-    estado.cola.push({ tipo: 'registro' });
-    guardar(); errorAcceso(''); pestana = 'mapa'; pintarRuta(); procesarCola();
+    estado.participante = {
+      nombre: datos.nombre, dorsal: datos.dorsal, dni: datos.dni, telefono: datos.telefono || '',
+      moto: datos.moto || '', acompanante: datos.acompanante || '', demo: !!datos.demo, alta: new Date().toISOString()
+    };
+    if (!datos.demo) estado.cola.push({ tipo: 'registro' });
+    guardar(); errorAcceso(''); pintarRuta(); procesarCola();
     toast('¡Bienvenido al desafío, ' + datos.nombre.split(' ')[0] + '!');
   }
   function accesoRuta(ev) {
     ev.preventDefault();
     var dni = normalizarDni(ev.target.dni.value);
     errorAcceso('');
-    if (!dniValido(dni)) { errorAcceso('El DNI/NIE no es correcto. Revisa los números y la letra.'); return; }
-    // 1) Inscrito desde este mismo móvil
-    var local = estado.inscripciones.filter(function (x) { return (x.dni === dni || x.acompDni === dni) && x.estado === 'pagada'; })[0];
-    if (local) {
-      entrarRuta({ nombre: local.nombre + ' ' + local.apellidos, dorsal: local.numero || 'P-' + dni.slice(-4), dni: dni, telefono: local.telefono });
+    // Usuario de demostración
+    if (R.demo && dni === normalizarDni(R.demo.dni)) {
+      var D = R.demo;
+      entrarRuta({ nombre: D.nombre + ' ' + D.apellidos, dorsal: D.dorsal, dni: dni, telefono: D.telefono, moto: D.moto, acompanante: D.acompanante, demo: true });
       return;
     }
-    // 2) Sin servidor todavía: solo se puede probar en modo prueba
+    if (!dniValido(dni)) { errorAcceso('El DNI/NIE no es correcto. Revisa los números y la letra.'); return; }
+    // Inscrito y pagado desde este mismo móvil
+    var local = estado.inscripciones.filter(function (x) { return (x.dni === dni || x.acompDni === dni) && x.estado === 'pagada'; })[0];
+    if (local) {
+      var esA = local.acompDni === dni;
+      entrarRuta({ nombre: esA ? local.acompNombre : local.nombre + ' ' + local.apellidos, dorsal: local.numero, dni: dni, telefono: local.telefono, moto: local.moto, acompanante: esA ? '' : local.acompNombre });
+      return;
+    }
     if (!C.urlServidor) {
       if (C.modoPrueba) { entrarRuta({ nombre: 'Participante de prueba', dorsal: 'PRUEBA', dni: dni }); toast('Modo prueba: acceso sin comprobar'); return; }
       errorAcceso('No se puede comprobar la inscripción ahora mismo. Contacta con la organización.');
       return;
     }
     if (!navigator.onLine) { errorAcceso('Necesitas conexión a internet para comprobar tu inscripción la primera vez.'); return; }
-    // 3) Comprobación en la lista de inscritos del club
     var b = $('#boton-acceso'); b.disabled = true; b.textContent = 'Comprobando…';
-    fetch(C.urlServidor, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ accion: 'acceso', dni: dni }) })
-      .then(function (r) { return r.json(); })
-      .then(function (res) {
-        if (!res || !res.ok) throw new Error((res && res.error) || 'Error');
-        if (!res.encontrado) {
-          errorAcceso('Este DNI no aparece en las inscripciones del Raid. Si te acabas de inscribir espera un momento; si no, <b>inscríbete</b> primero o contacta con el club.');
-          return;
-        }
-        entrarRuta({ nombre: res.nombre, dorsal: res.numero, dni: dni, telefono: res.telefono });
-      })
-      .catch(function () { errorAcceso('No se ha podido comprobar ahora mismo. Inténtalo de nuevo en unos segundos.'); })
-      .then(function () { b.disabled = false; b.textContent = 'Entrar'; });
-  }
-
-  /* Mapa sin conexión */
-  function teselasRuta() {
-    var claves = {};
-    function x(lng, z) { return Math.floor((lng + 180) / 360 * Math.pow(2, z)); }
-    function y(lat, z) { var r = lat * Math.PI / 180; return Math.floor((1 - Math.log(Math.tan(r) + 1 / Math.cos(r)) / Math.PI) / 2 * Math.pow(2, z)); }
-    for (var t = 0; t <= TOTAL; t++) {
-      var linea = lineaTramo(t), pts = [];
-      for (var k = 0; k < linea.length - 1; k++) {
-        var a = { lat: linea[k][0], lng: linea[k][1] }, b = { lat: linea[k + 1][0], lng: linea[k + 1][1] };
-        var pasos = Math.max(1, Math.ceil(distancia(a, b) / 400));
-        for (var s = 0; s < pasos; s++) pts.push([a.lat + (b.lat - a.lat) * s / pasos, a.lng + (b.lng - a.lng) * s / pasos]);
+    llamarServidor({ accion: 'acceso', dni: dni }).then(function (res) {
+      if (!res.encontrado) {
+        errorAcceso('Este DNI no aparece entre las inscripciones pagadas. Si acabas de pagar espera un momento; si no, <b>inscríbete</b> o contacta con el club.');
+        return;
       }
-      pts.push(linea[linea.length - 1]);
-      R.mapa.zoomsSinConexion.forEach(function (z) {
-        var m = z <= 11 ? 1 : 0;
-        pts.forEach(function (pt) {
-          var tx = x(pt[1], z), ty = y(pt[0], z);
-          for (var dx = -m; dx <= m; dx++) for (var dy = -m; dy <= m; dy++) claves[z + '/' + (tx + dx) + '/' + (ty + dy)] = 1;
-        });
-      });
-    }
-    return Object.keys(claves).map(function (c) {
-      var p = c.split('/');
-      return R.mapa.teselas.replace('{s}', 'a').replace('{r}', '').replace('{z}', p[0]).replace('{x}', p[1]).replace('{y}', p[2]);
-    });
-  }
-  function descargarMapa() {
-    if (!navigator.onLine) { toast('Necesitas conexión (mejor wifi)'); return; }
-    var boton = $('#boton-offline'); boton.disabled = true; $('#barra-offline').hidden = false;
-    var urls = [LEAFLET_JS, LEAFLET_CSS, 'ruta-trazado.json'].concat(teselasRuta());
-    var hechas = 0, fallos = 0, i = 0, total = urls.length;
-    function progreso() {
-      $('#barra-offline-valor').style.width = Math.round(hechas / total * 100) + '%';
-      $('#texto-offline').textContent = 'Descargando mapa… ' + hechas + ' de ' + total;
-    }
-    function trabajador() {
-      if (i >= urls.length) return Promise.resolve();
-      var u = urls[i++];
-      return fetch(u, { mode: u.indexOf('http') === 0 ? 'cors' : 'same-origin' }).then(function (r) { if (!r.ok && u.indexOf('http') === 0) fallos++; }, function () { fallos++; })
-        .then(function () { hechas++; progreso(); return trabajador(); });
-    }
-    progreso();
-    Promise.all([trabajador(), trabajador(), trabajador(), trabajador()]).then(function () {
-      estado.mapaOffline = { fecha: new Date().toISOString() }; guardar();
-      boton.disabled = false; $('#barra-offline').hidden = true; pintarOffline();
-      toast(fallos > total / 5 ? 'Descarga incompleta. Vuelve a intentarlo con wifi.' : 'Mapa descargado. ¡Listo para la sierra!');
-    });
-  }
-  function pintarOffline() {
-    var m = estado.mapaOffline;
-    if (m) {
-      $('#texto-offline').textContent = 'Mapa descargado el ' + new Date(m.fecha).toLocaleDateString('es-ES') + ' a las ' + hora(m.fecha) + '.';
-      $('#boton-offline').textContent = 'Volver a descargar';
-    }
+      entrarRuta({ nombre: res.nombre, dorsal: res.numero, dni: dni, telefono: res.telefono, moto: res.moto, acompanante: res.acompanante });
+    }).catch(function () { errorAcceso('No se ha podido comprobar ahora mismo. Inténtalo de nuevo en unos segundos.'); })
+      .then(function () { b.disabled = false; b.textContent = 'Entrar'; });
   }
 
   /* ------------------------------------------------------------------
@@ -906,8 +814,6 @@
     document.addEventListener('click', function (e) {
       var el = e.target.closest('[data-ir]');
       if (el) { e.preventDefault(); ir(el.getAttribute('data-ir')); }
-      var pt = e.target.closest('[data-pestana]');
-      if (pt) elegirPestana(pt.getAttribute('data-pestana'));
     });
     $('#boton-atras').addEventListener('click', atras);
     window.addEventListener('popstate', function () { ir((location.hash || '#inicio').slice(1), true); });
@@ -923,28 +829,28 @@
     $('#boton-sin-gps').addEventListener('click', pulsarSinGps);
     $('#boton-simular').addEventListener('click', pulsarSimular);
     $('#entrada-foto').addEventListener('change', fotoElegida);
-    $('#boton-offline').addEventListener('click', descargarMapa);
     $('#boton-reintentar').addEventListener('click', function () {
       if (!navigator.onLine) toast('Sin conexión ahora mismo');
       else procesarCola().then(function () { toast(estado.cola.length ? 'Sigue pendiente, se reintentará' : 'Todo enviado ✓'); });
     });
-    $('#boton-centrar').addEventListener('click', function () {
-      var pos = posicionReciente();
-      if (pos && mapa) mapa.setView([pos.lat, pos.lng], Math.max(mapa.getZoom(), 14)); else toast(errorGps || 'Buscando señal GPS…');
-    });
-    $('#boton-tramo').addEventListener('click', encuadrarTramo);
     $('#boton-emergencia').addEventListener('click', function () {
-      if (estado.verCompleta) { estado.verCompleta = false; guardar(); encuadrado = false; pintarRuta(); return; }
-      pedirCodigo('Ruta completa', function () { estado.verCompleta = true; guardar(); encuadrado = false; elegirPestana('mapa'); });
+      if (estado.verCompleta) { estado.verCompleta = false; guardar(); pintarAyuda(); return; }
+      pedirCodigo('Ruta completa', function () { estado.verCompleta = true; guardar(); ir('puntos'); });
     });
-    $('#boton-borrar').addEventListener('click', function () {
-      pedirCodigo('Borrar datos de la ruta', function () {
-        fotos.borrarTodo().then(function () {
-          estado.participante = null; estado.sellos = {}; estado.verCompleta = false;
-          estado.cola = estado.cola.filter(function (i) { return i.tipo === 'inscripcion'; });
-          guardar(); pestana = 'mapa'; pintarRuta(); toast('Datos de la ruta borrados');
-        });
+    function borrarRuta() {
+      return fotos.borrarTodo().then(function () {
+        estado.participante = null; estado.sellos = {}; estado.verCompleta = false;
+        estado.cola = estado.cola.filter(function (i) { return i.tipo === 'inscripcion'; });
+        guardar();
       });
+    }
+    $('#boton-borrar').addEventListener('click', function () {
+      pedirCodigo('Borrar datos de la ruta', function () { borrarRuta().then(function () { ir('ruta'); toast('Datos de la ruta borrados'); }); });
+    });
+    $('#boton-salir').addEventListener('click', function () {
+      if (esDemo()) { borrarRuta().then(function () { pintarRuta(); toast('Demostración reiniciada'); }); return; }
+      modal('<h2>¿Salir?</h2><p>Para volver a entrar necesitarás tu DNI. Tus fotos se conservan si vuelves a entrar con el mismo DNI en este móvil.</p>', [
+        { texto: 'Salir', principal: true, accion: function () { estado.participante = null; guardar(); pintarRuta(); } }, { texto: 'Cancelar' }]);
     });
     $('#modal').addEventListener('click', function (e) { if (e.target.id === 'modal') $('#modal').hidden = true; });
 
@@ -953,8 +859,8 @@
     setInterval(function () { if (estado.cola.length) procesarCola(); }, 60000);
     setInterval(function () {
       if (actual === 'raid') pintarCuentaAtras($('#raid-cuenta'), C.evento.fechaSalida);
-      if (actual === 'ruta' && !rutaDesbloqueada()) pintarCuentaAtras($('#ruta-cuenta'), R.desbloqueo);
-      if (actual === 'ruta' && rutaDesbloqueada() && !$('#ruta-bloqueada').hidden) pintarRuta();
+      if (actual === 'ruta' && estado.participante && !rutaDesbloqueada()) pintarCuentaAtras($('#ruta-cuenta'), R.desbloqueo);
+      if (actual === 'ruta' && estado.participante && rutaDesbloqueada() && !$('#ruta-bloqueada').hidden) pintarRuta();
     }, 1000);
 
     window.addEventListener('beforeinstallprompt', function (e) { e.preventDefault(); eventoInstalar = e; $('#boton-instalar').hidden = false; });
@@ -968,8 +874,6 @@
     volverDePago();
     var pend = ultimaInscripcion();
     if (pend && pend.estado === 'pendiente' && !vieneDePago) comprobarPago(pend, true);
-    if (actual === 'ruta' && !$('#ruta-cuenta').innerHTML) pintarCuentaAtras($('#ruta-cuenta'), R.desbloqueo);
-    cargarTrazado().then(function () { if (actual === 'ruta') pintarRuta(); });
     procesarCola();
   }
 

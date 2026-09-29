@@ -270,3 +270,40 @@ label.casilla input { width: 22px; height: 22px; margin: 1px 0 0; accent-color: 
 .estado-chip { display: inline-block; margin-top: 6px; padding: 3px 10px; border-radius: 12px; font: 700 13px var(--condensada); text-transform: uppercase; letter-spacing: .5px; }
 .estado-chip.pendiente { background: var(--amarillo); color: #000; }
 .estado-chip.pagada { background: var(--verde); color: #000; }
+
+/* ------------------------------------------------ Menú del participante */
+.ficha { display: grid; grid-template-columns: 1fr auto; gap: 12px; align-items: stretch; background: rgba(22,22,22,.95); border: 1px solid var(--borde); border-left: 4px solid var(--amarillo); border-radius: 8px; padding: 12px 14px; }
+.ficha-nombre { font-family: var(--titulos); font-size: 22px; line-height: 1.15; text-transform: uppercase; }
+.ficha-linea { color: var(--suave); font-size: 14px; }
+.ficha-dorsal { min-width: 96px; text-align: center; background: #fff; color: #000; border: 3px solid var(--rojo); border-radius: 6px; padding: 6px 10px; display: flex; flex-direction: column; justify-content: center; box-shadow: 3px 3px 0 var(--amarillo); }
+.ficha-dorsal small { font: 700 12px var(--condensada); text-transform: uppercase; letter-spacing: 1.5px; color: var(--rojo); }
+.ficha-dorsal b { font-family: var(--titulos); font-weight: 400; font-size: 44px; line-height: 1; }
+.demo-aviso { margin-top: 8px; text-align: center; background: var(--amarillo); color: #000; border-radius: 4px; font: 700 13px/1.8 var(--condensada); text-transform: uppercase; letter-spacing: 1px; }
+#p-ruta .raid-cabecera { margin: 16px 0 18px; }
+.enlaces-pie { text-align: center; margin-top: 10px; }
+
+.rejilla-carnet { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 14px; }
+.casilla-foto { position: relative; aspect-ratio: 1; border-radius: 8px; overflow: hidden; background: #151515 center/cover no-repeat; border: 2px dashed #555; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; cursor: default; padding: 0; color: #fff; text-align: left; }
+.casilla-foto.hecha { border: 2px solid var(--verde); }
+.casilla-foto.siguiente { border: 3px dashed var(--amarillo); cursor: pointer; justify-content: center; animation: brillo 1.6s infinite; }
+@keyframes brillo { 0%, 100% { box-shadow: 0 0 0 0 rgba(255,212,0,.45); } 50% { box-shadow: 0 0 0 8px rgba(255,212,0,0); } }
+.casilla-foto .camara { font-size: 44px; line-height: 1; }
+.casilla-foto .pulsa { font: 700 14px var(--condensada); text-transform: uppercase; color: var(--amarillo); margin-top: 6px; }
+.casilla-pie { position: absolute; left: 0; right: 0; bottom: 0; padding: 18px 8px 6px; background: linear-gradient(transparent, rgba(0,0,0,.85)); font-size: 13px; line-height: 1.2; }
+.casilla-pie b { display: block; font: 700 14px var(--condensada); text-transform: uppercase; }
+.casilla-num { position: absolute; top: 6px; left: 6px; background: var(--rojo); color: #fff; border: 2px solid #000; border-radius: 50%; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; font-family: var(--titulos); font-size: 16px; }
+.casilla-foto.hecha .casilla-num { background: var(--verde); }
+.casilla-foto.siguiente .casilla-pie { background: none; position: static; padding: 8px; text-align: center; }
+
+.lista-puntos { display: grid; gap: 12px; }
+.punto { display: grid; grid-template-columns: 44px 1fr; gap: 12px; align-items: center; text-decoration: none; color: #fff; background: rgba(22,22,22,.95); border: 1px solid var(--borde); border-left: 4px solid var(--rojo); border-radius: 8px; padding: 12px; }
+.punto.hecho { border-left-color: var(--verde); }
+.punto.meta { border-left-color: var(--amarillo); }
+.punto-num { width: 44px; height: 44px; border-radius: 50%; background: var(--rojo); border: 2px solid #000; display: flex; align-items: center; justify-content: center; font-family: var(--titulos); font-size: 22px; }
+.punto.hecho .punto-num { background: var(--verde); }
+.punto.meta .punto-num { background: #000; border-color: var(--amarillo); font-size: 20px; }
+.punto-tramo { font: 700 12px var(--condensada); text-transform: uppercase; letter-spacing: 1px; color: var(--amarillo); }
+.punto-nombre { font-family: var(--titulos); font-size: 21px; line-height: 1.15; text-transform: uppercase; }
+.punto-info { color: var(--suave); font-size: 13.5px; }
+.punto-abrir { display: inline-block; margin-top: 6px; background: #fff; color: #000; border-radius: 4px; padding: 3px 10px; font: 700 14px var(--condensada); text-transform: uppercase; }
+.punto-oculto { text-align: center; color: #777; border: 2px dashed #333; border-radius: 8px; padding: 14px; font: 700 15px var(--condensada); text-transform: uppercase; letter-spacing: .5px; }

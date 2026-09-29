@@ -142,6 +142,20 @@ window.CONFIG = {
     desbloqueo: '2027-05-07T08:00:00+02:00',          // cuándo se puede ver la ruta
     radioSelladoMetros: 250,
     codigoOrganizacion: 'SIERRA2027',                 // ¡CAMBIAR!
+
+    // Usuario de DEMOSTRACIÓN (datos ficticios) para enseñar la app.
+    // Con este DNI se entra siempre, la ruta está abierta y se puede simular
+    // la llegada a cada punto. Sus fotos NO se envían al club.
+    demo: {
+      dni: '01010125L',
+      nombre: 'Prueba', apellidos: 'Ejemplo Demostración',
+      dorsal: 0, telefono: '600 000 000', localidad: 'Villacarrillo (Jaén)',
+      moto: 'Moto de ejemplo 900', acompanante: ''
+    },
+
+    // Logo que sale en el menú de la ruta (cuando tengáis el del Motor Raid,
+    // ponedlo en icons/ y cambiad el nombre aquí)
+    logo: 'icons/logo.png',
     mapa: {
       teselas: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
       atribucion: '&copy; colaboradores de OpenStreetMap',
@@ -149,6 +163,10 @@ window.CONFIG = {
       zoomsSinConexion: [9, 10, 11, 12, 13]
     },
     salida: { nombre: 'Paseo de Santo Cristo (Villacarrillo)', lat: 38.1196247, lng: -3.0786158 },
+    // Cada punto es el FINAL de un tramo (el tramo 1 va de la salida al punto 1).
+    // enlaceMaps (opcional): pega aquí el enlace de Google Maps de ese tramo
+    //   tal cual lo copias de Google Maps, y se abrirá exactamente esa ruta.
+    // via (opcional): puntos de paso [[lat, lng], ...] si no hay enlaceMaps.
     puntos: [
       { id: 'guadalen', nombre: 'Presa de Guadalén', lugar: 'Vilches (Jaén)', lat: 38.1617424, lng: -3.4785971, pista: 'Haz la foto con el muro de la presa o el embalse de fondo.' },
       { id: 'tamujoso', nombre: 'Playa del Tamujoso', lugar: 'Embalse del Rumblar · Baños de la Encina (Jaén)', lat: 38.179766, lng: -3.795534, pista: 'Que se vea el embalse del Rumblar.' },

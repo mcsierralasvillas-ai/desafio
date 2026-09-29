@@ -153,15 +153,8 @@
       </div>
     </section>
 
-    <!-- ================= RUTA ================= -->
-    <section class="pantalla pantalla-ruta" id="p-ruta" hidden>
-      <div class="pestanas" role="tablist">
-        <button class="pestana activa" data-pestana="mapa">Ruta</button>
-        <button class="pestana" data-pestana="carnet">Carnet</button>
-        <button class="pestana" data-pestana="ayuda">Ayuda</button>
-      </div>
-
-      <!-- Registro para la ruta -->
+    <!-- ================= RUTA (menú del participante) ================= -->
+    <section class="pantalla" id="p-ruta" hidden>
       <form id="form-ruta" class="tarjeta" hidden>
         <h2>Acceso a la ruta</h2>
         <p class="suave">Solo pueden entrar los participantes inscritos. Escribe el DNI o NIE con el que te inscribiste.</p>
@@ -171,87 +164,106 @@
         <button class="enlace" type="button" data-ir="inscripcion">¿Aún no estás inscrito? Inscríbete aquí</button>
       </form>
 
-      <!-- Pestaña Ruta -->
-      <div class="pestana-contenido" id="t-mapa" hidden>
+      <div id="ruta-home" hidden>
+        <div class="ficha">
+          <div class="ficha-datos">
+            <div class="etiqueta">Participante</div>
+            <div class="ficha-nombre" id="ficha-nombre"></div>
+            <div class="ficha-linea" id="ficha-dni"></div>
+            <div class="ficha-linea" id="ficha-extra"></div>
+          </div>
+          <div class="ficha-dorsal">
+            <small>Dorsal</small>
+            <b id="ficha-dorsal"></b>
+          </div>
+        </div>
+        <div class="demo-aviso" id="demo-aviso" hidden>Usuario de demostración · datos ficticios</div>
+
+        <div class="raid-cabecera">
+          <img src="icons/logo.png" alt="Motor Raid Sierra Las Villas" class="raid-logo" id="ruta-logo">
+          <div class="raid-reto" id="ruta-reto"></div>
+          <div class="progreso-linea"><div id="home-progreso"></div></div>
+          <div class="suave" id="home-progreso-texto"></div>
+        </div>
+
         <div id="ruta-bloqueada" class="tarjeta centrado" hidden>
-          <h2>Ruta sorpresa</h2>
-          <p>La ruta se desbloquea en:</p>
+          <h3>La ruta se desbloquea en</h3>
           <div class="cuenta-atras" id="ruta-cuenta"></div>
-          <p class="suave">Mientras tanto, descarga el mapa con wifi.</p>
         </div>
-        <div id="ruta-activa" hidden>
-          <div class="mapa-caja">
-            <div id="mapa" class="mapa"></div>
-            <div id="mapa-no-disponible" class="mapa-vacio" hidden><div>Mapa no disponible sin conexión la primera vez.<br>Usa <b>Navegar con Google Maps</b>.</div></div>
-            <div class="botones-mapa">
-              <button class="boton-redondo" id="boton-centrar" aria-label="Centrar en mí">◎</button>
-              <button class="boton-redondo" id="boton-tramo" aria-label="Ver tramo">⤢</button>
-            </div>
-          </div>
-          <div class="panel-destino">
-            <div class="panel-etiqueta" id="destino-etiqueta"></div>
-            <div class="panel-nombre" id="destino-nombre"></div>
-            <div class="panel-lugar" id="destino-lugar"></div>
-            <div class="panel-distancia" id="destino-distancia"></div>
-            <div class="panel-pista" id="destino-pista"></div>
-            <div class="panel-botones">
-              <a class="boton" id="boton-navegar" target="_blank" rel="noopener">Google Maps</a>
-              <button class="boton boton-principal" id="boton-sellar">📷 Sellar</button>
-            </div>
-            <button class="enlace" id="boton-sin-gps">¿El GPS no te detecta en el punto?</button>
-            <button class="boton boton-prueba" id="boton-simular" hidden>Simular llegada (modo prueba)</button>
-          </div>
-        </div>
-        <div class="tarjeta">
-          <h3>Mapa sin conexión</h3>
-          <p class="suave" id="texto-offline">En la sierra hay zonas sin cobertura. Descarga el mapa con wifi antes de salir.</p>
-          <div class="barra-progreso" hidden id="barra-offline"><div id="barra-offline-valor"></div></div>
-          <button class="boton" id="boton-offline">Descargar mapa</button>
-        </div>
+
+        <nav class="menu-grande">
+          <button class="boton-menu boton-menu-raid" data-ir="carnet">
+            <span class="boton-menu-texto">CARNET FOTOGRÁFICO</span>
+            <span class="boton-menu-sub" id="home-sub-carnet"></span>
+          </button>
+          <button class="boton-menu" data-ir="puntos">
+            <span class="boton-menu-texto">PUNTOS DE RUTA</span>
+            <span class="boton-menu-sub" id="home-sub-puntos"></span>
+          </button>
+        </nav>
+
         <div class="tarjeta" id="bloque-cola" hidden>
           <h3>Fotos pendientes de envío</h3>
           <p class="suave" id="texto-cola"></p>
           <button class="boton" id="boton-reintentar">Enviar ahora</button>
         </div>
+        <div class="enlaces-pie">
+          <button class="enlace" data-ir="ayuda">Ayuda, seguridad y teléfonos</button>
+          <button class="enlace" id="boton-salir">Salir de este participante</button>
+        </div>
       </div>
+    </section>
 
-      <!-- Pestaña Carnet -->
-      <div class="pestana-contenido" id="t-carnet" hidden>
-        <div class="tarjeta carnet-cabecera">
-          <img src="icons/logo.png" alt="" class="carnet-logo">
-          <div class="carnet-titulo">Carnet de sellado</div>
-          <div class="carnet-nombre" id="carnet-nombre"></div>
-          <div class="progreso-linea"><div id="progreso-valor"></div></div>
-          <div class="suave" id="progreso-texto"></div>
-        </div>
-        <div id="enhorabuena" class="tarjeta enhorabuena" hidden></div>
-        <div class="rejilla-sellos" id="rejilla-sellos"></div>
+    <!-- ================= CARNET FOTOGRÁFICO ================= -->
+    <section class="pantalla" id="p-carnet" hidden>
+      <div class="tarjeta carnet-cabecera">
+        <div class="carnet-titulo">Carnet fotográfico</div>
+        <div class="carnet-nombre" id="carnet-nombre"></div>
+        <div class="progreso-linea"><div id="progreso-valor"></div></div>
+        <div class="suave" id="progreso-texto"></div>
       </div>
-
-      <!-- Pestaña Ayuda -->
-      <div class="pestana-contenido" id="t-ayuda" hidden>
-        <div class="tarjeta">
-          <h3>Cómo funciona</h3>
-          <ol class="lista">
-            <li>Sigue el tramo marcado hasta el siguiente punto.</li>
-            <li>Al llegar, pulsa <b>Sellar</b> y haz una foto donde se vea el sitio.</li>
-            <li>Se desbloquea el siguiente tramo.</li>
-            <li>Con todos los sellos, ve a <b id="ayuda-final"></b> a por tu diploma.</li>
-          </ol>
-          <p class="suave">Las fotos se guardan en el móvil y se envían solas cuando hay cobertura.</p>
-        </div>
-        <div class="tarjeta aviso-seguridad">
-          <h3>Seguridad</h3>
-          <p>No uses el móvil conduciendo. Para en un sitio seguro para mirar la ruta o hacer la foto. No es una carrera.</p>
-        </div>
-        <div class="tarjeta">
-          <h3>Organización</h3>
-          <div id="ayuda-telefonos" class="telefonos"></div>
-          <button class="boton boton-aviso" id="boton-emergencia">Ver ruta completa (organización)</button>
-          <button class="enlace" id="boton-borrar">Borrar datos de la ruta en este móvil (organización)</button>
-        </div>
+      <div id="enhorabuena" class="tarjeta enhorabuena" hidden></div>
+      <div class="rejilla-carnet" id="rejilla-carnet"></div>
+      <div class="tarjeta" id="bloque-sellar">
+        <div class="panel-etiqueta" id="sellar-etiqueta"></div>
+        <div class="panel-nombre" id="sellar-nombre"></div>
+        <div class="panel-distancia" id="sellar-distancia"></div>
+        <div class="panel-pista" id="sellar-pista"></div>
+        <button class="boton boton-principal" id="boton-sellar">📷 Hacer la foto y sellar</button>
+        <button class="enlace" id="boton-sin-gps">¿El GPS no te detecta en el punto?</button>
+        <button class="boton boton-prueba" id="boton-simular" hidden>Simular llegada (demostración)</button>
       </div>
       <input type="file" accept="image/*" capture="environment" id="entrada-foto" hidden>
+    </section>
+
+    <!-- ================= PUNTOS DE RUTA ================= -->
+    <section class="pantalla" id="p-puntos" hidden>
+      <p class="suave centrado" id="puntos-intro">Los puntos se van desvelando al sellar cada foto. Pulsa un tramo para abrirlo en Google Maps.</p>
+      <div id="lista-puntos" class="lista-puntos"></div>
+    </section>
+
+    <!-- ================= AYUDA DE LA RUTA ================= -->
+    <section class="pantalla" id="p-ayuda" hidden>
+      <div class="tarjeta">
+        <h3>Cómo funciona</h3>
+        <ol class="lista">
+          <li>En <b>Puntos de ruta</b> tienes el siguiente tramo: púlsalo y se abre en Google Maps.</li>
+          <li>Al llegar, entra en <b>Carnet fotográfico</b>, pulsa la casilla y haz una foto donde se vea el sitio.</li>
+          <li>Se desbloquea el siguiente punto.</li>
+          <li>Con todos los sellos, ve a <b id="ayuda-final"></b> a por tu diploma.</li>
+        </ol>
+        <p class="suave">Las fotos se guardan en el móvil y se envían solas cuando hay cobertura. Descarga la zona en Google Maps sin conexión antes de salir.</p>
+      </div>
+      <div class="tarjeta aviso-seguridad">
+        <h3>Seguridad</h3>
+        <p>No uses el móvil conduciendo. Para en un sitio seguro para mirar la ruta o hacer la foto. No es una carrera.</p>
+      </div>
+      <div class="tarjeta">
+        <h3>Organización</h3>
+        <div id="ayuda-telefonos" class="telefonos"></div>
+        <button class="boton boton-aviso" id="boton-emergencia">Ver ruta completa (organización)</button>
+        <button class="enlace" id="boton-borrar">Borrar datos de la ruta en este móvil (organización)</button>
+      </div>
     </section>
 
     <!-- ================= INFORMACIÓN DEL EVENTO ================= -->

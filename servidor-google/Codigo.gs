@@ -50,7 +50,7 @@ var COLS_SOL = ['Id solicitud', 'Fecha', 'Estado', 'Nombre', 'Apellidos', 'DNI',
   'Método de pago', 'Id sesión Stripe', 'Nº inscripción', 'Condiciones aceptadas', 'Id app'];
 var S = {}; COLS_SOL.forEach(function (c, i) { S[c] = i; });
 // Columnas de "Inscritos" (solo pagados = inscripciones válidas)
-var COLS_INSC = ['Nº', 'Fecha de pago', 'Nombre', 'Apellidos', 'DNI', 'Teléfono', 'Email', 'Localidad', 'Moto', 'Talla',
+var COLS_INSC = ['Nº / Dorsal', 'Fecha de pago', 'Nombre', 'Apellidos', 'DNI', 'Teléfono', 'Email', 'Localidad', 'Moto', 'Talla',
   'Acompañante', 'Nombre acompañante', 'DNI acompañante', 'Talla acompañante', 'Cena piloto', 'Cena acompañante', 'Personas en la cena',
   'Importe pagado (€)', 'Método de pago', 'Id solicitud'];
 var COLS_SELLO = ['Recibido', 'Dorsal', 'Nombre', 'Orden', 'Punto', 'Hora de la foto', 'Distancia al punto (m)', 'Precisión GPS (m)', 'Sin GPS', 'Simulado (prueba)', 'Foto', 'Ubicación', 'Id punto'];
@@ -258,7 +258,8 @@ function acceso(d) {
   var r = buscarInscrito(dni);
   if (!r) return { ok: true, encontrado: false };
   var esAcomp = normalizarDni(r.v[12]) === dni;
-  return { ok: true, encontrado: true, numero: r.v[0], nombre: esAcomp ? String(r.v[11]) : (r.v[2] + ' ' + r.v[3]).trim(), telefono: String(r.v[5] || '') };
+  return { ok: true, encontrado: true, numero: r.v[0], nombre: esAcomp ? String(r.v[11]) : (r.v[2] + ' ' + r.v[3]).trim(), telefono: String(r.v[5] || ''),
+    moto: String(r.v[8] || ''), acompanante: esAcomp ? '' : String(r.v[11] || '') };
 }
 
 // ------------------ Stripe ------------------
