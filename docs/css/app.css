@@ -307,3 +307,21 @@ label.casilla input { width: 22px; height: 22px; margin: 1px 0 0; accent-color: 
 .punto-info { color: var(--suave); font-size: 13.5px; }
 .punto-abrir { display: inline-block; margin-top: 6px; background: #fff; color: #000; border-radius: 4px; padding: 3px 10px; font: 700 14px var(--condensada); text-transform: uppercase; }
 .punto-oculto { text-align: center; color: #777; border: 2px dashed #333; border-radius: 8px; padding: 14px; font: 700 15px var(--condensada); text-transform: uppercase; letter-spacing: .5px; }
+
+/* ------------------------------------------------------- Mi inscripción */
+.datos-lista { display: grid; grid-template-columns: auto 1fr; gap: 6px 14px; font-size: 15px; }
+.datos-lista dt { color: var(--suave); }
+.datos-lista dd { margin: 0; font-weight: 600; word-break: break-word; }
+.chip-si, .chip-no { display: inline-block; padding: 2px 10px; border-radius: 12px; font: 700 13px var(--condensada); text-transform: uppercase; }
+.chip-si { background: var(--verde); color: #000; }
+.chip-no { background: #333; color: #bbb; }
+.pack { list-style: none; padding: 0; margin: 6px 0 0; }
+.pack li { padding: 8px 0 8px 32px; border-bottom: 1px solid var(--borde); position: relative; }
+.pack li:last-child { border-bottom: 0; }
+.pack li::before { content: "🎁"; position: absolute; left: 0; }
+.pack-titulo { font: 700 14px var(--condensada); text-transform: uppercase; color: var(--amarillo); letter-spacing: .5px; margin-top: 10px; }
+
+/* Confirmación de foto */
+.confirmar-foto { display: flex; gap: 10px; align-items: flex-start; text-align: left; margin: 12px 0 4px; font-size: 15px; }
+.confirmar-foto input { width: 24px; height: 24px; flex: none; accent-color: var(--rojo); }
+.aviso-foto { background: rgba(227, 6, 11, .15); border: 1px solid var(--rojo); border-radius: 6px; padding: 10px; font-size: 15px; }

@@ -257,9 +257,21 @@ function acceso(d) {
   if (!dni) return { ok: false, error: 'Falta el DNI' };
   var r = buscarInscrito(dni);
   if (!r) return { ok: true, encontrado: false };
-  var esAcomp = normalizarDni(r.v[12]) === dni;
-  return { ok: true, encontrado: true, numero: r.v[0], nombre: esAcomp ? String(r.v[11]) : (r.v[2] + ' ' + r.v[3]).trim(), telefono: String(r.v[5] || ''),
-    moto: String(r.v[8] || ''), acompanante: esAcomp ? '' : String(r.v[11] || '') };
+  var v = r.v, esAcomp = normalizarDni(v[12]) === dni;
+  var fecha = v[1] instanceof Date ? Utilities.formatDate(v[1], 'Europe/Madrid', 'dd/MM/yyyy HH:mm') : String(v[1] || '');
+  return {
+    ok: true, encontrado: true, numero: v[0], esAcompanante: esAcomp,
+    nombre: esAcomp ? String(v[11]) : (v[2] + ' ' + v[3]).trim(), telefono: String(v[5] || ''),
+    moto: String(v[8] || ''), acompanante: esAcomp ? '' : String(v[11] || ''),
+    // Datos completos para el apartado "Mi inscripción" de la app
+    detalle: {
+      piloto: (v[2] + ' ' + v[3]).trim(), dni: String(v[4] || ''), telefono: String(v[5] || ''), email: String(v[6] || ''),
+      localidad: String(v[7] || ''), moto: String(v[8] || ''), talla: String(v[9] || ''),
+      conAcompanante: si(v[10]), acompNombre: String(v[11] || ''), acompDni: String(v[12] || ''), acompTalla: String(v[13] || ''),
+      cenaPiloto: si(v[14]), cenaAcomp: si(v[15]), personasCena: Number(v[16]) || 0,
+      importe: Number(v[17]) || 0, metodo: String(v[18] || ''), fechaPago: fecha
+    }
+  };
 }
 
 // ------------------ Stripe ------------------

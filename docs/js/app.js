@@ -8,7 +8,7 @@
 
   var C = window.CONFIG;
   var R = C.ruta;
-  var VERSION_APP = '2.3.0';
+  var VERSION_APP = '2.4.0';
   var CLAVE = 'mcslv_estado_v2';
   var TOTAL = R.puntos.length;
 
@@ -138,6 +138,7 @@
     carnet: { titulo: 'Carnet fotográfico', padre: 'ruta' },
     puntos: { titulo: 'Puntos de ruta', padre: 'ruta' },
     ayuda: { titulo: 'Ayuda', padre: 'ruta' },
+    miinscripcion: { titulo: 'Mi inscripción', padre: 'ruta' },
     evento: { titulo: 'Información del evento', padre: 'raid' },
     club: { titulo: 'El club', padre: 'inicio' },
     socio: { titulo: 'Socio', padre: 'inicio' },
@@ -169,6 +170,7 @@
     if (actual === 'carnet') pintarCarnet();
     if (actual === 'puntos') pintarPuntos();
     if (actual === 'ayuda') pintarAyuda();
+    if (actual === 'miinscripcion') pintarMiInscripcion();
     if (actual === 'evento') pintarEvento();
     if (actual === 'club') pintarClub();
     if (actual === 'socio') pintarSocio();
@@ -624,6 +626,73 @@
     $('#lista-puntos').innerHTML = html.join('');
   }
 
+  /* ---- Mi inscripción ---- */
+  function detalleDeLocal(x) {
+    return { piloto: x.nombre + ' ' + x.apellidos, dni: x.dni, telefono: x.telefono, email: x.email, localidad: x.localidad, moto: x.moto, talla: x.talla,
+      conAcompanante: !!x.conAcompanante, acompNombre: x.acompNombre, acompDni: x.acompDni, acompTalla: x.acompTalla,
+      cenaPiloto: !!x.cenaPiloto, cenaAcomp: !!x.cenaAcomp, personasCena: (x.cenaPiloto ? 1 : 0) + (x.cenaAcomp ? 1 : 0),
+      importe: x.total, metodo: '', fechaPago: '' };
+  }
+  var refrescandoDetalle = false, ultimoRefresco = 0;
+  function refrescarDetalle() {
+    var p = estado.participante;
+    if (!p || p.demo || refrescandoDetalle || !C.urlServidor || !navigator.onLine) return;
+    if (Date.now() - ultimoRefresco < 60000) return; // como mucho una vez por minuto
+    refrescandoDetalle = true; ultimoRefresco = Date.now();
+    llamarServidor({ accion: 'acceso', dni: p.dni }).then(function (res) {
+      if (res.encontrado && res.detalle) { p.detalle = res.detalle; p.esAcompanante = !!res.esAcompanante; p.dorsal = res.numero; guardar(); if (actual === 'miinscripcion') pintarMiInscripcion(); }
+    }).catch(function () {}).then(function () { refrescandoDetalle = false; });
+  }
+  function siNo(v) { return v ? '<span class="chip-si">Sí</span>' : '<span class="chip-no">No</span>'; }
+  function metodoBonito(m) {
+    return ({ apple_pay: 'Apple Pay', google_pay: 'Google Pay', card: 'Tarjeta', bizum: 'Bizum' })[m] || m || '—';
+  }
+  function pintarMiInscripcion() {
+    if (!exigirParticipante()) return;
+    var p = estado.participante, d = p.detalle;
+    $('#mi-nombre').textContent = p.nombre;
+    $('#mi-dorsal').textContent = dorsalTexto(p.dorsal);
+    $('#mi-sub').textContent = p.esAcompanante ? 'Inscrito como acompañante' : 'Piloto';
+    if (!d) {
+      $('#mi-estado').textContent = navigator.onLine ? 'Cargando tus datos…' : 'Necesitas conexión la primera vez para ver tus datos.';
+      $('#mi-contenido').innerHTML = '';
+      refrescarDetalle();
+      return;
+    }
+    $('#mi-estado').textContent = '';
+    var I2 = C.inscripcion, pk = I2.pack || {};
+    var desglose = lineasImporte(d);
+    var html = [];
+    html.push('<div class="tarjeta"><h3>Piloto</h3><dl class="datos-lista">' +
+      '<dt>Nombre</dt><dd>' + esc(d.piloto) + '</dd>' +
+      '<dt>DNI</dt><dd>' + esc(d.dni) + '</dd>' +
+      '<dt>Teléfono</dt><dd>' + esc(d.telefono || '—') + '</dd>' +
+      '<dt>Correo</dt><dd>' + esc(d.email || '—') + '</dd>' +
+      (d.localidad ? '<dt>Localidad</dt><dd>' + esc(d.localidad) + '</dd>' : '') +
+      '<dt>Moto</dt><dd>' + esc(d.moto || '—') + '</dd>' +
+      '<dt>Talla</dt><dd>' + esc(d.talla || '—') + '</dd>' +
+      '<dt>Cena</dt><dd>' + siNo(d.cenaPiloto) + '</dd></dl></div>');
+    html.push('<div class="tarjeta"><h3>Acompañante</h3>' + (d.conAcompanante ?
+      '<dl class="datos-lista"><dt>Nombre</dt><dd>' + esc(d.acompNombre) + '</dd><dt>DNI</dt><dd>' + esc(d.acompDni) + '</dd>' +
+      '<dt>Talla</dt><dd>' + esc(d.acompTalla || '—') + '</dd><dt>Cena</dt><dd>' + siNo(d.cenaAcomp) + '</dd></dl>'
+      : '<p>Vas <b>sin acompañante</b>.</p>') + '</div>');
+    if (I2.cena && I2.cena.activa) {
+      html.push('<div class="tarjeta"><h3>Gran cena de recepción</h3><p>' + (d.personasCena ? '<b>' + d.personasCena + (d.personasCena > 1 ? ' personas' : ' persona') + '</b> apuntada' + (d.personasCena > 1 ? 's' : '') + '. El lugar se anunciará próximamente.'
+        : 'No te has apuntado a la cena.') + '</p></div>');
+    }
+    html.push('<div class="tarjeta"><h3>Pago</h3><div class="desglose">' + htmlDesglose(desglose) + '</div>' +
+      '<div class="total">Pagado: <b>' + euros(d.importe || totalLineas(desglose)) + '</b></div>' +
+      '<p class="suave">' + (d.metodo ? 'Método: ' + esc(metodoBonito(d.metodo)) : '') + (d.fechaPago ? ' · ' + esc(d.fechaPago) : '') + '</p></div>');
+    var lista = function (arr) { return '<ul class="pack">' + arr.map(function (t) { return '<li>' + esc(t) + '</li>'; }).join('') + '</ul>'; };
+    html.push('<div class="tarjeta tarjeta-destacada"><h3>Lo que te entrega el club</h3>' +
+      '<div class="pack-titulo">Pack del piloto</div>' + lista(pk.piloto || []) +
+      (d.conAcompanante ? '<div class="pack-titulo">Pack del acompañante</div>' + lista(pk.acompanante || []) : '') +
+      (d.personasCena ? '<div class="pack-titulo">Cena</div>' + lista(['Cena de recepción · ' + d.personasCena + (d.personasCena > 1 ? ' menús' : ' menú')]) : '') +
+      (pk.recogida ? '<p class="suave">' + esc(pk.recogida) + '</p>' : '') + '</div>');
+    $('#mi-contenido').innerHTML = html.join('');
+    refrescarDetalle();
+  }
+
   function pintarAyuda() {
     $('#ayuda-final').textContent = C.evento.lugarFinal;
     $('#ayuda-telefonos').innerHTML = htmlTelefonos();
@@ -676,8 +745,32 @@
     var archivo = ev.target.files && ev.target.files[0], datos = selloPendiente;
     selloPendiente = null;
     if (!archivo || !datos) return;
-    toast('Guardando sello…', 8000);
     comprimirFoto(archivo, 1280, 0.75).then(function (dataUrl) {
+      confirmarFoto(datos, dataUrl);
+    }).catch(function (err) { modal('<h2>Error</h2><p>No se pudo leer la foto. Inténtalo otra vez.</p><p class="suave">' + esc(err.message) + '</p>'); });
+  }
+
+  /* Antes de guardar: aviso de que la foto es definitiva */
+  function confirmarFoto(datos, dataUrl) {
+    var p = datos.punto;
+    modal('<h2>¿Es la foto definitiva?</h2><img class="modal-foto" src="' + dataUrl + '" alt="">' +
+      '<div class="aviso-foto"><b>Atención:</b> una vez subida, esta foto <b>no se podrá borrar ni cambiar</b>. Comprueba que se ve bien el sitio: ' + esc(p.nombre) + '.</div>' +
+      '<label class="confirmar-foto"><input type="checkbox" id="check-foto"> <span>Confirmo que esta es la foto definitiva del punto ' + (R.puntos.indexOf(p) + 1) + '.</span></label>', [
+      { texto: 'Sellar con esta foto', principal: true, accion: function () {
+        if (!$('#check-foto').checked) { toast('Marca la casilla para confirmar'); return false; }
+        setTimeout(function () { guardarSello(datos, dataUrl); }, 50);
+      } },
+      { texto: 'Repetir la foto', accion: function () { selloPendiente = datos; var e = $('#entrada-foto'); e.value = ''; e.click(); } },
+      { texto: 'Cancelar' }
+    ]);
+    var bOk = $('#modal-botones .boton-principal');
+    bOk.disabled = true;
+    $('#check-foto').addEventListener('change', function () { bOk.disabled = !this.checked; });
+  }
+
+  function guardarSello(datos, dataUrl) {
+    toast('Guardando sello…', 8000);
+    (function () {
       var p = datos.punto;
       return fotos.guardar(p.id, dataUrl).then(function () {
         estado.sellos[p.id] = { hora: new Date().toISOString(), lat: datos.lat, lng: datos.lng, precision: datos.precision, distancia: datos.distancia, sinGps: datos.sinGps, simulado: datos.simulado, subido: false };
@@ -694,7 +787,7 @@
         }
         procesarCola();
       });
-    }).catch(function (err) { modal('<h2>Error</h2><p>No se pudo guardar la foto. Inténtalo otra vez.</p><p class="suave">' + esc(err.message) + '</p>'); });
+    })().catch(function (err) { modal('<h2>Error</h2><p>No se pudo guardar la foto. Inténtalo otra vez.</p><p class="suave">' + esc(err.message) + '</p>'); });
   }
   function htmlEnhorabuena() {
     var nombre = estado.participante ? estado.participante.nombre.split(' ')[0] : '';
@@ -707,7 +800,8 @@
   function entrarRuta(datos) {
     estado.participante = {
       nombre: datos.nombre, dorsal: datos.dorsal, dni: datos.dni, telefono: datos.telefono || '',
-      moto: datos.moto || '', acompanante: datos.acompanante || '', demo: !!datos.demo, alta: new Date().toISOString()
+      moto: datos.moto || '', acompanante: datos.acompanante || '', demo: !!datos.demo, alta: new Date().toISOString(),
+      esAcompanante: !!datos.esAcompanante, detalle: datos.detalle || null
     };
     if (!datos.demo) estado.cola.push({ tipo: 'registro' });
     guardar(); errorAcceso(''); pintarRuta(); procesarCola();
@@ -728,7 +822,8 @@
     var local = estado.inscripciones.filter(function (x) { return (x.dni === dni || x.acompDni === dni) && x.estado === 'pagada'; })[0];
     if (local) {
       var esA = local.acompDni === dni;
-      entrarRuta({ nombre: esA ? local.acompNombre : local.nombre + ' ' + local.apellidos, dorsal: local.numero, dni: dni, telefono: local.telefono, moto: local.moto, acompanante: esA ? '' : local.acompNombre });
+      entrarRuta({ nombre: esA ? local.acompNombre : local.nombre + ' ' + local.apellidos, dorsal: local.numero, dni: dni, telefono: local.telefono, moto: local.moto,
+        acompanante: esA ? '' : local.acompNombre, esAcompanante: esA, detalle: detalleDeLocal(local) });
       return;
     }
     if (!C.urlServidor) {
@@ -743,7 +838,7 @@
         errorAcceso('Este DNI no aparece entre las inscripciones pagadas. Si acabas de pagar espera un momento; si no, <b>inscríbete</b> o contacta con el club.');
         return;
       }
-      entrarRuta({ nombre: res.nombre, dorsal: res.numero, dni: dni, telefono: res.telefono, moto: res.moto, acompanante: res.acompanante });
+      entrarRuta({ nombre: res.nombre, dorsal: res.numero, dni: dni, telefono: res.telefono, moto: res.moto, acompanante: res.acompanante, esAcompanante: res.esAcompanante, detalle: res.detalle });
     }).catch(function () { errorAcceso('No se ha podido comprobar ahora mismo. Inténtalo de nuevo en unos segundos.'); })
       .then(function () { b.disabled = false; b.textContent = 'Entrar'; });
   }

@@ -114,6 +114,14 @@ window.CONFIG = {
     // Formas de pago que se muestran al participante
     metodos: 'Pago seguro con tarjeta, Apple Pay, Google Pay o Bizum.',
 
+    // Lo que ENTREGA EL CLUB a cada inscrito (sale en "Mi inscripción").
+    // Tomado del pack de bienvenida de 2026: REVISAR para 2027.
+    pack: {
+      piloto: ['Camiseta del evento', 'Dorsal del evento', 'Bordado del evento', 'Consumición (cerveza o refresco)', 'Diploma de finalización', 'Papeleta para el sorteo'],
+      acompanante: ['Camiseta del evento', 'Consumición (cerveza o refresco)', 'Diploma de finalización'],   // REVISAR
+      recogida: 'Se recoge en la KDD del viernes en el Paseo de Santo Cristo (Villacarrillo). Enseña esta pantalla al llegar.'
+    },
+
     // Pago manual (solo se usa si el servidor no tiene configurado Stripe)
     bizum: '',            // COMPLETAR si se quiere: teléfono de Bizum del club
     iban: '',             // COMPLETAR si se quiere: cuenta del club
@@ -142,16 +150,6 @@ window.CONFIG = {
     desbloqueo: '2027-05-07T08:00:00+02:00',          // cuándo se puede ver la ruta
     radioSelladoMetros: 250,
     codigoOrganizacion: 'SIERRA2027',                 // ¡CAMBIAR!
-
-    // Usuario de DEMOSTRACIÓN (datos ficticios) para enseñar la app.
-    // Con este DNI se entra siempre, la ruta está abierta y se puede simular
-    // la llegada a cada punto. Sus fotos NO se envían al club.
-    demo: {
-      dni: '01010125L',
-      nombre: 'Prueba', apellidos: 'Ejemplo Demostración',
-      dorsal: 0, telefono: '600 000 000', localidad: 'Villacarrillo (Jaén)',
-      moto: 'Moto de ejemplo 900', acompanante: ''
-    },
 
     // Logo que sale en el menú de la ruta (cuando tengáis el del Motor Raid,
     // ponedlo en icons/ y cambiad el nombre aquí)

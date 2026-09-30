@@ -1,6 +1,6 @@
 /* Service worker: la app abre y funciona sin conexión.
    IMPORTANTE: cada vez que subas cambios, sube el número de VERSION. */
-var VERSION = 'v8';
+var VERSION = 'v9';
 var CACHE_APP = 'mcslv-app-' + VERSION;
 var CACHE_EXTERNO = 'mcslv-externo';
 var CACHE_TESELAS = 'mcslv-teselas';

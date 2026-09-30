@@ -200,6 +200,10 @@
             <span class="boton-menu-texto">PUNTOS DE RUTA</span>
             <span class="boton-menu-sub" id="home-sub-puntos"></span>
           </button>
+          <button class="boton-menu" data-ir="miinscripcion" id="boton-miinscripcion">
+            <span class="boton-menu-texto">MI INSCRIPCIÓN</span>
+            <span class="boton-menu-sub">Datos, pago, cena y lo que te da el club</span>
+          </button>
         </nav>
 
         <div class="tarjeta" id="bloque-cola" hidden>
@@ -240,6 +244,20 @@
     <section class="pantalla" id="p-puntos" hidden>
       <p class="suave centrado" id="puntos-intro">Los puntos se van desvelando al sellar cada foto. Pulsa un tramo para abrirlo en Google Maps.</p>
       <div id="lista-puntos" class="lista-puntos"></div>
+    </section>
+
+    <!-- ================= MI INSCRIPCIÓN ================= -->
+    <section class="pantalla" id="p-miinscripcion" hidden>
+      <div class="ficha">
+        <div class="ficha-datos">
+          <div class="etiqueta">Inscripción confirmada</div>
+          <div class="ficha-nombre" id="mi-nombre"></div>
+          <div class="ficha-linea" id="mi-sub"></div>
+        </div>
+        <div class="ficha-dorsal"><small>Dorsal</small><b id="mi-dorsal"></b></div>
+      </div>
+      <p class="suave centrado" id="mi-estado"></p>
+      <div id="mi-contenido"></div>
     </section>
 
     <!-- ================= AYUDA DE LA RUTA ================= -->
