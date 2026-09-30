@@ -8,7 +8,7 @@
 
   var C = window.CONFIG;
   var R = C.ruta;
-  var VERSION_APP = '2.4.0';
+  var VERSION_APP = '2.4.1';
   var CLAVE = 'mcslv_estado_v2';
   var TOTAL = R.puntos.length;
 

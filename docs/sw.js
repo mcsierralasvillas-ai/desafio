@@ -1,12 +1,12 @@
 /* Service worker: la app abre y funciona sin conexión.
    IMPORTANTE: cada vez que subas cambios, sube el número de VERSION. */
-var VERSION = 'v9';
+var VERSION = 'v10';
 var CACHE_APP = 'mcslv-app-' + VERSION;
 var CACHE_EXTERNO = 'mcslv-externo';
 var CACHE_TESELAS = 'mcslv-teselas';
 
 var ARCHIVOS_APP = [
-  './', 'index.html', 'css/app.css', 'js/config.js', 'js/app.js', 'manifest.webmanifest',
+  './', 'index.html', 'css/app.css?v=2.4.1', 'js/config.js?v=2.4.1', 'js/app.js?v=2.4.1', 'manifest.webmanifest',
   'icons/logo.png', 'icons/icon-192.png', 'icons/icon-512.png', 'icons/apple-touch-icon.png'
 ];
 
