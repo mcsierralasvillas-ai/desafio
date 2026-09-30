@@ -178,7 +178,7 @@ window.CONFIG = {
 
   // ------------------------------------------------------------- SERVIDOR
   // URL de Google Apps Script (termina en /exec). Vacío = no se envía nada.
-  urlServidor: '',
+  urlServidor: 'https://script.google.com/macros/s/AKfycbzgsB9rOmXZY9xpGhpjYf_zZPqJR0BuUeSzk-vV-E_nhl5NHksDHWs-L5Qe8syVw5U7Uw/exec',
 
   // MODO PRUEBA: ruta desbloqueada y botón "Simular llegada". ¡false en el evento!
   modoPrueba: true

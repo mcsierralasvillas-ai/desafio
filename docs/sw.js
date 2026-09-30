@@ -1,6 +1,6 @@
 /* Service worker: la app abre y funciona sin conexión.
    IMPORTANTE: cada vez que subas cambios, sube el número de VERSION. */
-var VERSION = 'v6';
+var VERSION = 'v8';
 var CACHE_APP = 'mcslv-app-' + VERSION;
 var CACHE_EXTERNO = 'mcslv-externo';
 var CACHE_TESELAS = 'mcslv-teselas';
@@ -54,8 +54,9 @@ self.addEventListener('fetch', function (e) {
   }
 
   // Archivos propios: primero internet (lo último), si no hay, lo guardado
+  // cache: 'no-cache' → siempre pregunta a GitHub si hay versión nueva (no usa la caché del navegador)
   e.respondWith(
-    fetch(req).then(function (r) {
+    fetch(req, { cache: 'no-cache' }).then(function (r) {
       if (r && r.ok) { var copia = r.clone(); caches.open(CACHE_APP).then(function (c) { c.put(req, copia); }); }
       return r;
     }).catch(function () {
