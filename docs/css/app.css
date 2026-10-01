@@ -325,3 +325,11 @@ label.casilla input { width: 22px; height: 22px; margin: 1px 0 0; accent-color: 
 .confirmar-foto { display: flex; gap: 10px; align-items: flex-start; text-align: left; margin: 12px 0 4px; font-size: 15px; }
 .confirmar-foto input { width: 24px; height: 24px; flex: none; accent-color: var(--rojo); }
 .aviso-foto { background: rgba(227, 6, 11, .15); border: 1px solid var(--rojo); border-radius: 6px; padding: 10px; font-size: 15px; }
+
+/* -------------------------------------------------------------- WhatsApp */
+.boton-menu-whatsapp { background: linear-gradient(180deg, #25d366 0%, #1fa855 60%, #157a3d 100%); box-shadow: 6px 6px 0 var(--amarillo), 0 0 0 2px #fff inset; }
+.boton-menu-whatsapp .boton-menu-texto { display: inline-flex; align-items: center; gap: 10px; }
+.boton-menu-whatsapp .boton-menu-sub { color: #fff; }
+.whatsapp-tarjeta { border-left-color: #25d366; }
+.whatsapp-icono { width: 110px; height: 110px; margin: 6px auto 10px; border-radius: 50%; background: #25d366; color: #fff; display: flex; align-items: center; justify-content: center; box-shadow: 4px 4px 0 var(--amarillo); }
+.boton-whatsapp-grande { display: flex; align-items: center; justify-content: center; gap: 10px; background: #25d366; border-color: #000; color: #fff; font-size: 20px; box-shadow: 3px 3px 0 var(--amarillo); }

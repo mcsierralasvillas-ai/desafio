@@ -61,6 +61,9 @@ window.CONFIG = {
       { nombre: 'Contacto 2', numero: '630874922' }
     ],
     whatsapp: '600373448',
+    // Grupo oficial de WhatsApp del evento (botón WHATSAPP del menú de la ruta)
+    grupoWhatsapp: 'https://chat.whatsapp.com/CrY3hwgnqv37nSewdxEGBx?mode=gi_t',
+    textoWhatsapp: 'Aquí puedes entrar en el grupo de WhatsApp oficial del Motor Raid Sierra Las Villas 2027. Avisos de la organización, horarios, cambios de última hora y ambiente motero.',
     email: 'mcsierralasvillas@gmail.com',
     instagram: 'mcsierralasvillas',
     facebook: '',                   // COMPLETAR: dirección completa de la página de Facebook

@@ -38,6 +38,14 @@ var AJUSTES = {
 // PRECIOS (en euros). Deben coincidir con js/config.js de la app.
 var PRECIOS = { PILOTO: 25, ACOMPANANTE: 20, CENA: 20 };
 
+// Lo que entrega el club (debe coincidir con "pack" en js/config.js de la app)
+var PACK = {
+  PILOTO: ['Camiseta del evento', 'Dorsal del evento', 'Bordado del evento', 'Consumición (cerveza o refresco)', 'Diploma de finalización', 'Papeleta para el sorteo'],
+  ACOMPANANTE: ['Camiseta del evento', 'Consumición (cerveza o refresco)', 'Diploma de finalización'],
+  RECOGIDA: 'Se recoge en la KDD del viernes en el Paseo de Santo Cristo (Villacarrillo).'
+};
+var WHATSAPP_GRUPO = 'https://chat.whatsapp.com/CrY3hwgnqv37nSewdxEGBx?mode=gi_t';
+
 // La clave secreta de Stripe NO se escribe aquí: se guarda en
 // Configuración del proyecto → Propiedades del script → STRIPE_SECRET
 // (sk_test_... para pruebas, sk_live_... para cobrar de verdad).
@@ -223,6 +231,52 @@ function confirmarPago(sol, metodo) {
   return numero;
 }
 
+/** Correo de enhorabuena al inscrito, con todos sus datos y lo pagado */
+function correoConfirmacion(v, numero, personasCena, metodo) {
+  var rojo = '#e3060b', amarillo = '#ffd400';
+  var dorsal = ('00' + numero).slice(-3);
+  var conA = si(v[S['Acompañante']]);
+  var l = lineas({ conAcompanante: conA, cenaPiloto: si(v[S['Cena piloto']]), cenaAcomp: si(v[S['Cena acompañante']]) });
+  var fila = function (k, val) { return '<tr><td style="padding:6px 10px;color:#666;border-bottom:1px solid #eee">' + k + '</td><td style="padding:6px 10px;font-weight:bold;border-bottom:1px solid #eee">' + limpiar(val) + '</td></tr>'; };
+  var tabla = function (filas) { return '<table style="width:100%;border-collapse:collapse;font-size:15px">' + filas.join('') + '</table>'; };
+  var titulo = function (t) { return '<h3 style="margin:24px 0 8px;color:' + rojo + ';text-transform:uppercase;font-size:17px">' + t + '</h3>'; };
+  var lista = function (arr) { return '<ul style="margin:6px 0;padding-left:20px">' + arr.map(function (x) { return '<li style="margin:3px 0">' + limpiar(x) + '</li>'; }).join('') + '</ul>'; };
+  var nombreMetodo = ({ apple_pay: 'Apple Pay', google_pay: 'Google Pay', card: 'Tarjeta', bizum: 'Bizum' })[metodo] || metodo;
+
+  return '<div style="font-family:Arial,Helvetica,sans-serif;max-width:600px;margin:0 auto;background:#ffffff;color:#111">' +
+    '<div style="background:#0b0b0b;padding:20px;text-align:center;border-bottom:6px solid ' + rojo + '">' +
+      '<img src="' + AJUSTES.URL_APP + 'icons/logo.png" alt="Motorclub Sierra Las Villas" style="width:220px;max-width:80%">' +
+    '</div>' +
+    '<div style="background:' + amarillo + ';padding:6px;text-align:center;font-weight:bold;letter-spacing:1px">MOTOR RAID SIERRA LAS VILLAS 2027</div>' +
+    '<div style="padding:22px">' +
+      '<h2 style="margin:0 0 6px;color:' + rojo + ';font-size:26px">¡Enhorabuena, ' + limpiar(v[S['Nombre']]) + '!</h2>' +
+      '<p style="font-size:16px;margin:0 0 16px">Ya estás inscrito en el <b>Motor Raid Sierra Las Villas 2027</b> del <b>Motorclub Sierra Las Villas</b>. Tu inscripción está pagada y confirmada.</p>' +
+      '<div style="text-align:center;margin:18px 0"><div style="display:inline-block;border:4px solid ' + rojo + ';border-radius:8px;padding:8px 26px;background:#fff">' +
+        '<div style="color:' + rojo + ';font-weight:bold;font-size:13px;letter-spacing:2px">DORSAL</div><div style="font-size:48px;font-weight:bold;line-height:1">' + dorsal + '</div></div></div>' +
+      titulo('Piloto') + tabla([
+        fila('Nombre', v[S['Nombre']] + ' ' + v[S['Apellidos']]), fila('DNI', v[S['DNI']]), fila('Teléfono', v[S['Teléfono']]),
+        fila('Correo', v[S['Email']]), fila('Localidad', v[S['Localidad']] || '—'), fila('Moto', v[S['Moto']] || '—'),
+        fila('Talla de camiseta', v[S['Talla']] || '—'), fila('Cena de recepción', si(v[S['Cena piloto']]) ? 'Sí' : 'No')]) +
+      titulo('Acompañante') + (conA ? tabla([
+        fila('Nombre', v[S['Nombre acompañante']]), fila('DNI', v[S['DNI acompañante']]), fila('Talla de camiseta', v[S['Talla acompañante']] || '—'),
+        fila('Cena de recepción', si(v[S['Cena acompañante']]) ? 'Sí' : 'No')]) : '<p>Sin acompañante.</p>') +
+      titulo('Pago') + tabla(l.map(function (x) { return fila(x[0], x[1] + ' €'); }).concat([
+        '<tr><td style="padding:10px;font-weight:bold;font-size:17px">TOTAL PAGADO</td><td style="padding:10px;font-weight:bold;font-size:20px;color:' + rojo + '">' + limpiar(v[S['Importe (€)']]) + ' €</td></tr>',
+        fila('Forma de pago', nombreMetodo || '—')])) +
+      (personasCena ? titulo('Gran cena de recepción') + '<p><b>' + personasCena + (personasCena > 1 ? ' personas apuntadas' : ' persona apuntada') + '</b>. Menú cerrado. Os avisaremos del lugar próximamente.</p>' : '') +
+      titulo('Lo que te entrega el club') + '<p style="margin:4px 0;font-weight:bold">Pack del piloto</p>' + lista(PACK.PILOTO) +
+      (conA ? '<p style="margin:10px 0 4px;font-weight:bold">Pack del acompañante</p>' + lista(PACK.ACOMPANANTE) : '') +
+      '<p style="color:#666">' + PACK.RECOGIDA + '</p>' +
+      titulo('Próximos pasos') + lista([
+        'Instala la app del club en tu móvil: ' + AJUSTES.URL_APP,
+        'El día del Raid entra en Raid 2027 → Ruta con tu DNI (el del conductor).',
+        'Antes de salir, descarga la zona de la sierra en Google Maps sin conexión.']) +
+      '<p style="text-align:center;margin:22px 0"><a href="' + WHATSAPP_GRUPO + '" style="background:#1fa855;color:#fff;text-decoration:none;font-weight:bold;padding:12px 22px;border-radius:6px;display:inline-block">Únete al grupo de WhatsApp del evento</a></p>' +
+    '</div>' +
+    '<div style="background:#0b0b0b;color:' + amarillo + ';padding:14px;text-align:center;font-size:13px">Motorclub Sierra Las Villas · Villacarrillo (Jaén)<br><span style="color:#ccc">Gasolina, compañerismo y pasión por las motos · ' + limpiar(AJUSTES.CORREO_CLUB) + '</span></div>' +
+  '</div>';
+}
+
 function avisarInscripcion(v, numero, personasCena, metodo) {
   var quien = v[S['Nombre']] + ' ' + v[S['Apellidos']];
   if (AJUSTES.AVISAR_INSCRIPCIONES && MailApp.getRemainingDailyQuota() > 5) {
@@ -239,18 +293,15 @@ function avisarInscripcion(v, numero, personasCena, metodo) {
   if (AJUSTES.CONFIRMAR_AL_INSCRITO && v[S['Email']] && MailApp.getRemainingDailyQuota() > 5) {
     MailApp.sendEmail({
       to: v[S['Email']],
-      subject: 'Inscripción confirmada Nº ' + numero + ' · Motor Raid Sierra Las Villas',
-      htmlBody: '<h2 style="color:#e3060b">¡Inscripción confirmada!</h2><p>Hola ' + limpiar(v[S['Nombre']]) + ', tu inscripción en el <b>Motor Raid Sierra Las Villas</b> está pagada.</p>' +
-        '<p style="font-size:22px">Nº de inscripción: <b>' + numero + '</b></p>' +
-        (personasCena ? '<p>Cena de recepción: ' + personasCena + ' persona(s). Te avisaremos del lugar.</p>' : '') +
-        '<p>El día del evento entra en la app, apartado <b>Raid 2027 → Ruta</b>, con tu DNI.</p><p>Motorclub Sierra Las Villas · Gasolina, compañerismo y pasión por las motos</p>',
+      subject: '🏍️ ¡Enhorabuena! Estás inscrito en el Motor Raid Sierra Las Villas 2027 · Dorsal ' + ('00' + numero).slice(-3),
+      htmlBody: correoConfirmacion(v, numero, personasCena, metodo),
       name: 'Motorclub Sierra Las Villas'
     });
   }
 }
 
 /** La app pregunta si un DNI puede entrar en la ruta: solo INSCRITOS (pagados).
-    Vale el DNI del piloto o el del acompañante. Para inscribir a alguien a mano
+    La app solo deja entrar al CONDUCTOR (si es el DNI del acompañante lo indica y lo bloquea). Para inscribir a alguien a mano
     (p. ej. en la KDD), basta con añadir una fila en "Inscritos" con Nº y DNI. */
 function acceso(d) {
   var dni = normalizarDni(d.dni);

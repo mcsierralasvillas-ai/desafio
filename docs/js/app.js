@@ -8,7 +8,7 @@
 
   var C = window.CONFIG;
   var R = C.ruta;
-  var VERSION_APP = '2.4.1';
+  var VERSION_APP = '2.5.0';
   var CLAVE = 'mcslv_estado_v2';
   var TOTAL = R.puntos.length;
 
@@ -139,6 +139,7 @@
     puntos: { titulo: 'Puntos de ruta', padre: 'ruta' },
     ayuda: { titulo: 'Ayuda', padre: 'ruta' },
     miinscripcion: { titulo: 'Mi inscripción', padre: 'ruta' },
+    whatsapp: { titulo: 'WhatsApp', padre: 'ruta' },
     evento: { titulo: 'Información del evento', padre: 'raid' },
     club: { titulo: 'El club', padre: 'inicio' },
     socio: { titulo: 'Socio', padre: 'inicio' },
@@ -171,6 +172,7 @@
     if (actual === 'puntos') pintarPuntos();
     if (actual === 'ayuda') pintarAyuda();
     if (actual === 'miinscripcion') pintarMiInscripcion();
+    if (actual === 'whatsapp') pintarWhatsapp();
     if (actual === 'evento') pintarEvento();
     if (actual === 'club') pintarClub();
     if (actual === 'socio') pintarSocio();
@@ -693,6 +695,12 @@
     refrescarDetalle();
   }
 
+  function pintarWhatsapp() {
+    if (!exigirParticipante()) return;
+    $('#wa-texto').textContent = C.contacto.textoWhatsapp || '';
+    $('#wa-enlace').href = C.contacto.grupoWhatsapp || '#';
+  }
+
   function pintarAyuda() {
     $('#ayuda-final').textContent = C.evento.lugarFinal;
     $('#ayuda-telefonos').innerHTML = htmlTelefonos();
@@ -819,7 +827,8 @@
     }
     if (!dniValido(dni)) { errorAcceso('El DNI/NIE no es correcto. Revisa los números y la letra.'); return; }
     // Inscrito y pagado desde este mismo móvil
-    var local = estado.inscripciones.filter(function (x) { return (x.dni === dni || x.acompDni === dni) && x.estado === 'pagada'; })[0];
+    if (estado.inscripciones.some(function (x) { return x.acompDni === dni; })) { errorAcceso('Este apartado es solo para el <b>conductor</b>: al tener el carnet fotográfico, el acceso con el DNI del acompañante podría provocar un error en la aplicación. Entra con el DNI del conductor principal.'); return; }
+    var local = estado.inscripciones.filter(function (x) { return x.dni === dni && x.estado === 'pagada'; })[0];
     if (local) {
       var esA = local.acompDni === dni;
       entrarRuta({ nombre: esA ? local.acompNombre : local.nombre + ' ' + local.apellidos, dorsal: local.numero, dni: dni, telefono: local.telefono, moto: local.moto,
@@ -834,6 +843,7 @@
     if (!navigator.onLine) { errorAcceso('Necesitas conexión a internet para comprobar tu inscripción la primera vez.'); return; }
     var b = $('#boton-acceso'); b.disabled = true; b.textContent = 'Comprobando…';
     llamarServidor({ accion: 'acceso', dni: dni }).then(function (res) {
+      if (res.encontrado && res.esAcompanante) { errorAcceso('Este apartado es solo para el <b>conductor</b>: al tener el carnet fotográfico, el acceso con el DNI del acompañante podría provocar un error en la aplicación. Entra con el DNI del conductor principal.'); return; }
       if (!res.encontrado) {
         errorAcceso('Este DNI no aparece entre las inscripciones pagadas. Si acabas de pagar espera un momento; si no, <b>inscríbete</b> o contacta con el club.');
         return;

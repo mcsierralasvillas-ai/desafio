@@ -16,7 +16,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anton&family=Barlow+Condensed:ital,wght@0,500;0,700;1,700;1,800&family=Barlow:wght@400;600;700&display=swap" media="print" onload="this.media='all'">
-  <link rel="stylesheet" href="css/app.css?v=2.4.1">
+  <link rel="stylesheet" href="css/app.css?v=2.5.0">
 </head>
 <body>
 
@@ -204,6 +204,10 @@
             <span class="boton-menu-texto">MI INSCRIPCIÓN</span>
             <span class="boton-menu-sub">Datos, pago, cena y lo que te da el club</span>
           </button>
+          <button class="boton-menu boton-menu-whatsapp" data-ir="whatsapp">
+            <span class="boton-menu-texto"><svg viewBox="0 0 32 32" width="30" height="30" aria-hidden="true"><path fill="currentColor" d="M16.04 3C9.4 3 4 8.36 4 14.98c0 2.3.65 4.53 1.88 6.46L4 29l7.77-1.83a12.1 12.1 0 0 0 4.27.78C22.68 27.95 28 22.6 28 15.98 28 9.36 22.68 3 16.04 3Zm0 21.9c-1.32 0-2.63-.26-3.86-.77l-.28-.12-4.6 1.08 1.1-4.42-.18-.29a9.86 9.86 0 0 1-1.5-5.4c0-5.42 4.42-9.82 9.86-9.82 5.42 0 9.84 4.4 9.84 9.82s-4.42 9.92-9.84 9.92Zm5.4-7.35c-.3-.15-1.75-.86-2.02-.96-.27-.1-.47-.15-.67.15-.2.3-.77.96-.94 1.16-.17.2-.35.22-.64.07-.3-.15-1.25-.46-2.38-1.46-.88-.78-1.47-1.75-1.64-2.05-.17-.3-.02-.45.13-.6.13-.13.3-.35.44-.52.15-.17.2-.3.3-.5.1-.2.05-.37-.02-.52-.08-.15-.67-1.6-.92-2.2-.24-.57-.48-.5-.67-.5h-.57c-.2 0-.52.07-.79.37-.27.3-1.04 1.01-1.04 2.47 0 1.46 1.06 2.87 1.21 3.07.15.2 2.09 3.18 5.06 4.46.71.3 1.26.49 1.69.62.71.23 1.36.2 1.87.12.57-.08 1.75-.71 2-1.4.25-.69.25-1.28.17-1.4-.07-.12-.27-.2-.57-.35Z"/></svg> WHATSAPP</span>
+            <span class="boton-menu-sub">Grupo oficial del evento</span>
+          </button>
         </nav>
 
         <div class="tarjeta" id="bloque-cola" hidden>
@@ -258,6 +262,17 @@
       </div>
       <p class="suave centrado" id="mi-estado"></p>
       <div id="mi-contenido"></div>
+    </section>
+
+    <!-- ================= WHATSAPP ================= -->
+    <section class="pantalla" id="p-whatsapp" hidden>
+      <div class="tarjeta centrado whatsapp-tarjeta">
+        <div class="whatsapp-icono"><svg viewBox="0 0 32 32" width="72" height="72" aria-hidden="true"><path fill="currentColor" d="M16.04 3C9.4 3 4 8.36 4 14.98c0 2.3.65 4.53 1.88 6.46L4 29l7.77-1.83a12.1 12.1 0 0 0 4.27.78C22.68 27.95 28 22.6 28 15.98 28 9.36 22.68 3 16.04 3Zm0 21.9c-1.32 0-2.63-.26-3.86-.77l-.28-.12-4.6 1.08 1.1-4.42-.18-.29a9.86 9.86 0 0 1-1.5-5.4c0-5.42 4.42-9.82 9.86-9.82 5.42 0 9.84 4.4 9.84 9.82s-4.42 9.92-9.84 9.92Zm5.4-7.35c-.3-.15-1.75-.86-2.02-.96-.27-.1-.47-.15-.67.15-.2.3-.77.96-.94 1.16-.17.2-.35.22-.64.07-.3-.15-1.25-.46-2.38-1.46-.88-.78-1.47-1.75-1.64-2.05-.17-.3-.02-.45.13-.6.13-.13.3-.35.44-.52.15-.17.2-.3.3-.5.1-.2.05-.37-.02-.52-.08-.15-.67-1.6-.92-2.2-.24-.57-.48-.5-.67-.5h-.57c-.2 0-.52.07-.79.37-.27.3-1.04 1.01-1.04 2.47 0 1.46 1.06 2.87 1.21 3.07.15.2 2.09 3.18 5.06 4.46.71.3 1.26.49 1.69.62.71.23 1.36.2 1.87.12.57-.08 1.75-.71 2-1.4.25-.69.25-1.28.17-1.4-.07-.12-.27-.2-.57-.35Z"/></svg></div>
+        <h2>Grupo oficial del evento</h2>
+        <p id="wa-texto"></p>
+        <a class="boton boton-whatsapp-grande" id="wa-enlace" target="_blank" rel="noopener"><svg viewBox="0 0 32 32" width="26" height="26" aria-hidden="true"><path fill="currentColor" d="M16.04 3C9.4 3 4 8.36 4 14.98c0 2.3.65 4.53 1.88 6.46L4 29l7.77-1.83a12.1 12.1 0 0 0 4.27.78C22.68 27.95 28 22.6 28 15.98 28 9.36 22.68 3 16.04 3Zm0 21.9c-1.32 0-2.63-.26-3.86-.77l-.28-.12-4.6 1.08 1.1-4.42-.18-.29a9.86 9.86 0 0 1-1.5-5.4c0-5.42 4.42-9.82 9.86-9.82 5.42 0 9.84 4.4 9.84 9.82s-4.42 9.92-9.84 9.92Zm5.4-7.35c-.3-.15-1.75-.86-2.02-.96-.27-.1-.47-.15-.67.15-.2.3-.77.96-.94 1.16-.17.2-.35.22-.64.07-.3-.15-1.25-.46-2.38-1.46-.88-.78-1.47-1.75-1.64-2.05-.17-.3-.02-.45.13-.6.13-.13.3-.35.44-.52.15-.17.2-.3.3-.5.1-.2.05-.37-.02-.52-.08-.15-.67-1.6-.92-2.2-.24-.57-.48-.5-.67-.5h-.57c-.2 0-.52.07-.79.37-.27.3-1.04 1.01-1.04 2.47 0 1.46 1.06 2.87 1.21 3.07.15.2 2.09 3.18 5.06 4.46.71.3 1.26.49 1.69.62.71.23 1.36.2 1.87.12.57-.08 1.75-.71 2-1.4.25-.69.25-1.28.17-1.4-.07-.12-.27-.2-.57-.35Z"/></svg> Unirme al grupo</a>
+        <p class="suave">Se abrirá WhatsApp para que pulses <b>Unirse al grupo</b>.</p>
+      </div>
     </section>
 
     <!-- ================= AYUDA DE LA RUTA ================= -->
@@ -386,7 +401,7 @@
   </div>
   <div class="toast" id="toast" hidden></div>
 
-  <script src="js/config.js?v=2.4.1"></script>
-  <script src="js/app.js?v=2.4.1"></script>
+  <script src="js/config.js?v=2.5.0"></script>
+  <script src="js/app.js?v=2.5.0"></script>
 </body>
 </html>
