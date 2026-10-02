@@ -8,7 +8,7 @@
 
   var C = window.CONFIG;
   var R = C.ruta;
-  var VERSION_APP = '2.6.0';
+  var VERSION_APP = '2.6.1';
   var CLAVE = 'mcslv_estado_v2';
   var TOTAL = 0; // nº de puntos de la ruta cargada (ver aplicarRuta)
 
@@ -496,7 +496,7 @@
   function hora(iso) { return new Date(iso).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' }); }
   function dorsalTexto(n) { return /^\d+$/.test(String(n)) ? String(n).padStart(3, '0') : String(n); }
 
-  function esDemo() { return !!(estado.participante && estado.participante.demo); }
+  function esDemo() { var p = estado.participante; return !!(p && (p.demo || esDniDemo(p.dni))); }
   function esDniDemo(dni) { return !!(R.demo && (R.demo.dnis || []).map(normalizarDni).indexOf(dni) >= 0); }
 
   /* La ruta REAL no viene en la app: la manda el servidor (solo al conductor
@@ -505,7 +505,7 @@
   function rutaGuardada() {
     var p = estado.participante;
     if (!p) return null;
-    if (p.demo) return R.demo || null;
+    if (esDemo()) return R.demo || null;
     var r = estado.rutaServidor;
     return (r && r.dni === p.dni && r.puntos && r.puntos.length) ? r : null;
   }
@@ -526,7 +526,7 @@
   var descargandoRuta = false, ultimaDescarga = 0;
   function descargarRuta(forzar) {
     var p = estado.participante;
-    if (!p || p.demo || rutaGuardada() || descargandoRuta || !C.urlServidor) return Promise.resolve();
+    if (!p || esDemo() || rutaGuardada() || descargandoRuta || !C.urlServidor) return Promise.resolve();
     if (!rutaDesbloqueada() || !navigator.onLine) return Promise.resolve();
     if (!forzar && Date.now() - ultimaDescarga < 30000) return Promise.resolve();
     descargandoRuta = true; ultimaDescarga = Date.now();
@@ -603,7 +603,7 @@
     $('#ficha-dni').textContent = 'DNI ' + (p.dni ? p.dni.slice(0, -4).replace(/./g, '•') + p.dni.slice(-4) : '');
     $('#ficha-extra').textContent = [p.moto, p.acompanante ? 'Acompañante: ' + p.acompanante : '', p.telefono].filter(Boolean).join(' · ');
     $('#ficha-dorsal').textContent = dorsalTexto(p.dorsal);
-    $('#demo-aviso').hidden = !p.demo;
+    $('#demo-aviso').hidden = !esDemo();
     $('#ruta-logo').src = R.logo || 'icons/logo.png';
     $('#ruta-reto').textContent = C.evento.reto;
     aplicarRuta();
