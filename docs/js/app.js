@@ -8,9 +8,9 @@
 
   var C = window.CONFIG;
   var R = C.ruta;
-  var VERSION_APP = '2.5.0';
+  var VERSION_APP = '2.6.0';
   var CLAVE = 'mcslv_estado_v2';
-  var TOTAL = R.puntos.length;
+  var TOTAL = 0; // nº de puntos de la ruta cargada (ver aplicarRuta)
 
   function $(s) { return document.querySelector(s); }
   function $$(s) { return Array.prototype.slice.call(document.querySelectorAll(s)); }
@@ -34,7 +34,7 @@
      ESTADO GUARDADO EN EL MÓVIL
      ------------------------------------------------------------------ */
   function estadoNuevo() {
-    return { inscripciones: [], participante: null, sellos: {}, cola: [], verCompleta: false, mapaOffline: null };
+    return { inscripciones: [], participante: null, sellos: {}, cola: [], verCompleta: false, mapaOffline: null, rutaServidor: null, horarios: null };
   }
   function cargarEstado() {
     try {
@@ -127,6 +127,12 @@
     return falta;
   }
 
+  function fechaBonita(iso) {
+    var d = new Date(iso), o = { timeZone: 'Europe/Madrid' };
+    return d.toLocaleDateString('es-ES', Object.assign({ weekday: 'long', day: 'numeric', month: 'long' }, o)) +
+      ' a las ' + d.toLocaleTimeString('es-ES', Object.assign({ hour: '2-digit', minute: '2-digit' }, o));
+  }
+
   /* ------------------------------------------------------------------
      NAVEGACIÓN ENTRE PANTALLAS
      ------------------------------------------------------------------ */
@@ -163,6 +169,7 @@
   }
 
   function pintar() {
+    aplicarRuta();
     $('#aviso-prueba').hidden = !C.modoPrueba;
     if (actual === 'inicio') pintarInicio();
     if (actual === 'raid') pintarRaid();
@@ -199,7 +206,7 @@
     var ins = ultimaInscripcion();
     $('#raid-estado-inscripcion').textContent = ins ? 'Inscrito · ' + referencia(ins) : 'Registro y pago';
     var n = numSellos();
-    $('#raid-estado-ruta').textContent = !rutaDesbloqueada() ? 'Se desbloquea 24 h antes' : (n ? n + ' de ' + TOTAL + ' sellos' : 'Mapa y carnet de sellado');
+    $('#raid-estado-ruta').textContent = (!estado.participante || !rutaDesbloqueada()) ? 'Disponible el ' + fechaBonita(horaDesbloqueo()) : (n ? n + ' de ' + TOTAL + ' sellos' : 'Mapa y carnet de sellado');
   }
 
   function pintarEvento() {
@@ -490,11 +497,55 @@
   function dorsalTexto(n) { return /^\d+$/.test(String(n)) ? String(n).padStart(3, '0') : String(n); }
 
   function esDemo() { return !!(estado.participante && estado.participante.demo); }
+  function esDniDemo(dni) { return !!(R.demo && (R.demo.dnis || []).map(normalizarDni).indexOf(dni) >= 0); }
+
+  /* La ruta REAL no viene en la app: la manda el servidor (solo al conductor
+     inscrito y a partir del viernes) y se guarda en el móvil para usarla sin
+     cobertura. Con el DNI de demostración se usa la ruta de ejemplo. */
+  function rutaGuardada() {
+    var p = estado.participante;
+    if (!p) return null;
+    if (p.demo) return R.demo || null;
+    var r = estado.rutaServidor;
+    return (r && r.dni === p.dni && r.puntos && r.puntos.length) ? r : null;
+  }
+  function aplicarRuta() {
+    var r = rutaGuardada();
+    R.salida = r ? r.salida : null; R.llegada = r ? (r.llegada || r.salida) : null;
+    R.puntos = r ? r.puntos : [];
+    TOTAL = R.puntos.length;
+  }
+  function hayRuta() { return TOTAL > 0 && !!R.salida; }
+  function horaDesbloqueo() { return (estado.horarios && estado.horarios.desbloqueoRuta) || R.desbloqueo; }
+  function horaSellado() { return (estado.horarios && estado.horarios.inicioSellado) || R.inicioSellado || horaDesbloqueo(); }
+  function guardarHorarios(res) {
+    if (res && res.desbloqueoRuta) { estado.horarios = { desbloqueoRuta: res.desbloqueoRuta, inicioSellado: res.inicioSellado || res.desbloqueoRuta }; }
+  }
+  function selladoAbierto() { return C.modoPrueba || esDemo() || Date.now() >= new Date(horaSellado()).getTime(); }
+
+  var descargandoRuta = false, ultimaDescarga = 0;
+  function descargarRuta(forzar) {
+    var p = estado.participante;
+    if (!p || p.demo || rutaGuardada() || descargandoRuta || !C.urlServidor) return Promise.resolve();
+    if (!rutaDesbloqueada() || !navigator.onLine) return Promise.resolve();
+    if (!forzar && Date.now() - ultimaDescarga < 30000) return Promise.resolve();
+    descargandoRuta = true; ultimaDescarga = Date.now();
+    if (actual === 'ruta') pintarRuta();
+    return llamarServidor({ accion: 'ruta', dni: p.dni }).then(function (res) {
+      guardarHorarios(res);
+      if (res.ruta && res.ruta.puntos && res.ruta.puntos.length) {
+        res.ruta.dni = p.dni; estado.rutaServidor = res.ruta;
+        aplicarRuta(); toast('Ruta descargada ✓ Ya funciona sin cobertura');
+      }
+      guardar();
+    }).catch(function (e) { console.warn('Ruta:', e.message); })
+      .then(function () { descargandoRuta = false; if (estado.participante) pintar(); });
+  }
   function numSellos() { return R.puntos.filter(function (p) { return estado.sellos[p.id]; }).length; }
   function indiceActual() { var i = 0; while (i < TOTAL && estado.sellos[R.puntos[i].id]) i++; return i; }
   function completado() { return indiceActual() >= TOTAL; }
   function destinoActual() { var i = indiceActual(); return i < TOTAL ? R.puntos[i] : R.llegada; }
-  function rutaDesbloqueada() { return C.modoPrueba || esDemo() || Date.now() >= new Date(R.desbloqueo).getTime(); }
+  function rutaDesbloqueada() { return C.modoPrueba || esDemo() || Date.now() >= new Date(horaDesbloqueo()).getTime(); }
   function paradas() { return [R.salida].concat(R.puntos, [R.llegada]); }
   function ultimoTramoVisible() { return (R.modo === 'completa' || estado.verCompleta) ? TOTAL : indiceActual(); }
   function simulacionPermitida() { return C.modoPrueba || esDemo(); }
@@ -522,7 +573,8 @@
   function posicionReciente() { return posicion && (Date.now() - posicion.t) < 120000 ? posicion : null; }
 
   function puedeSellar() {
-    if (completado()) return { si: false };
+    if (!hayRuta() || completado()) return { si: false };
+    if (!selladoAbierto()) return { si: false, motivo: 'Las fotos se pueden hacer desde el ' + fechaBonita(horaSellado()) };
     if (simulacionPermitida()) return { si: true };
     var pos = posicionReciente();
     if (!pos) return { si: false, motivo: errorGps || 'Buscando señal GPS…' };
@@ -554,21 +606,40 @@
     $('#demo-aviso').hidden = !p.demo;
     $('#ruta-logo').src = R.logo || 'icons/logo.png';
     $('#ruta-reto').textContent = C.evento.reto;
-    var n = numSellos();
-    $('#home-progreso').style.width = (n / TOTAL * 100) + '%';
-    $('#home-progreso-texto').textContent = completado() ? '¡Desafío completado!' : n + ' de ' + TOTAL + ' sellos';
-    var desbloq = rutaDesbloqueada();
-    $('#ruta-bloqueada').hidden = desbloq;
-    if (!desbloq) pintarCuentaAtras($('#ruta-cuenta'), R.desbloqueo);
-    $$('#ruta-home .menu-grande .boton-menu').forEach(function (b) { b.disabled = !desbloq; });
-    $('#home-sub-carnet').textContent = completado() ? 'Completo ✓' : 'Siguiente foto: punto ' + (indiceActual() + 1);
-    $('#home-sub-puntos').textContent = completado() ? 'Rumbo a meta' : 'Tramo ' + (indiceActual() + 1) + ' de ' + (TOTAL + 1);
+    aplicarRuta();
+    var n = numSellos(), desbloq = rutaDesbloqueada(), lista = desbloq && hayRuta();
+    $('#home-progreso').style.width = (TOTAL ? n / TOTAL * 100 : 0) + '%';
+    $('#home-progreso-texto').textContent = !lista ? 'La ruta aún no está disponible' : (completado() ? '¡Desafío completado!' : n + ' de ' + TOTAL + ' sellos');
+    $('#ruta-bloqueada').hidden = lista;
+    $('#ruta-cuenta').hidden = desbloq;
+    $('#ruta-bloqueada-titulo').textContent = desbloq ? 'Descargando la ruta' : 'La ruta aparece en';
+    if (!desbloq) {
+      pintarCuentaAtras($('#ruta-cuenta'), horaDesbloqueo());
+      $('#ruta-bloqueada-texto').innerHTML = 'El <b>' + esc(fechaBonita(horaDesbloqueo())) + '</b> aparecerá aquí el primer punto. ' +
+        'Las fotos del carnet se podrán hacer desde el <b>' + esc(fechaBonita(horaSellado())) + '</b>.';
+    } else {
+      $('#ruta-bloqueada-texto').innerHTML = descargandoRuta ? 'Un momento…' :
+        (navigator.onLine ? 'No se ha podido descargar todavía. <button class="enlace" id="boton-descargar-ruta">Reintentar</button>'
+          : '📶 <b>Conéctate a internet</b> un momento para descargar la ruta. Después funciona sin cobertura.');
+      var bd = $('#boton-descargar-ruta'); if (bd) bd.onclick = function () { descargarRuta(true); };
+      descargarRuta(false);
+    }
+    ['carnet', 'puntos'].forEach(function (k) { $('#ruta-home [data-ir="' + k + '"]').disabled = !lista; });
+    $('#home-sub-carnet').textContent = !lista ? '🔒 Bloqueado' : completado() ? 'Completo ✓' :
+      (selladoAbierto() ? 'Siguiente foto: punto ' + (indiceActual() + 1) : 'Fotos desde el ' + fechaBonita(horaSellado()));
+    $('#home-sub-puntos').textContent = !lista ? '🔒 Bloqueado' : completado() ? 'Rumbo a meta' : 'Tramo ' + (indiceActual() + 1) + ' de ' + (TOTAL + 1);
     pintarCola();
   }
 
   /* ---- Carnet fotográfico ---- */
+  function exigirRuta() {
+    aplicarRuta();
+    if (rutaDesbloqueada() && hayRuta()) return true;
+    setTimeout(function () { ir('ruta'); }, 0);
+    return false;
+  }
   function pintarCarnet() {
-    if (!exigirParticipante()) return;
+    if (!exigirParticipante() || !exigirRuta()) return;
     iniciarGps();
     var p = estado.participante, n = numSellos(), act = indiceActual();
     $('#carnet-nombre').textContent = p.nombre + ' · Dorsal ' + dorsalTexto(p.dorsal);
@@ -584,7 +655,7 @@
       el.className = 'casilla-foto ' + (s ? 'hecha' : (i === act ? 'siguiente' : ''));
       el.innerHTML = '<span class="casilla-num">' + (i + 1) + '</span>' +
         (s ? '<span class="casilla-pie"><b>' + esc(pt.nombre) + '</b>' + hora(s.hora) + (s.subido ? ' · ✓ enviado' : (esDemo() ? ' · demo' : ' · ⏳ pendiente')) + '</span>'
-           : '<span class="camara">📷</span><span class="casilla-pie"><b>' + esc(pt.nombre) + '</b><span class="pulsa">Pulsa para sellar</span></span>');
+           : '<span class="camara">📷</span><span class="casilla-pie"><b>' + esc(pt.nombre) + '</b><span class="pulsa">' + (selladoAbierto() ? 'Pulsa para sellar' : '🔒 Fotos desde el sábado 05:00') + '</span></span>');
       if (!s && i === act) el.addEventListener('click', pulsarSellar);
       rej.appendChild(el);
       if (s) fotos.leer(pt.id).then(function (u) { if (u) el.style.backgroundImage = 'url("' + u + '")'; });
@@ -605,13 +676,20 @@
       el.textContent = enPunto ? '¡Estás en el punto! Ya puedes sellar' : 'Estás a ' + textoDistancia(d) + ' en línea recta';
       el.classList.toggle('cerca', enPunto);
     } else { el.textContent = errorGps || 'Buscando señal GPS…'; el.classList.remove('cerca'); }
+    var abierto = selladoAbierto();
+    $('#sellar-espera').hidden = abierto;
+    if (!abierto) {
+      $('#sellar-espera-texto').textContent = 'Las fotos se podrán hacer a partir del ' + fechaBonita(horaSellado()) + '. Mientras tanto puedes ver el primer tramo en Puntos de ruta.';
+      pintarCuentaAtras($('#sellar-cuenta'), horaSellado());
+    }
     $('#boton-sellar').disabled = !e.si;
+    $('#boton-sin-gps').hidden = !abierto;
     $('#boton-simular').hidden = !simulacionPermitida();
   }
 
   /* ---- Puntos de ruta ---- */
   function pintarPuntos() {
-    if (!exigirParticipante()) return;
+    if (!exigirParticipante() || !exigirRuta()) return;
     var p = paradas(), act = indiceActual(), hasta = ultimoTramoVisible(), html = [];
     for (var i = 0; i <= hasta && i <= TOTAL; i++) {
       var dest = p[i + 1], meta = i === TOTAL, hecho = !meta && estado.sellos[dest.id];
@@ -638,11 +716,11 @@
   var refrescandoDetalle = false, ultimoRefresco = 0;
   function refrescarDetalle() {
     var p = estado.participante;
-    if (!p || p.demo || refrescandoDetalle || !C.urlServidor || !navigator.onLine) return;
+    if (!p || refrescandoDetalle || !C.urlServidor || !navigator.onLine) return;
     if (Date.now() - ultimoRefresco < 60000) return; // como mucho una vez por minuto
     refrescandoDetalle = true; ultimoRefresco = Date.now();
     llamarServidor({ accion: 'acceso', dni: p.dni }).then(function (res) {
-      if (res.encontrado && res.detalle) { p.detalle = res.detalle; p.esAcompanante = !!res.esAcompanante; p.dorsal = res.numero; guardar(); if (actual === 'miinscripcion') pintarMiInscripcion(); }
+      guardarHorarios(res); if (res.encontrado && res.detalle) { p.detalle = res.detalle; p.esAcompanante = !!res.esAcompanante; p.dorsal = res.numero; guardar(); if (actual === 'miinscripcion') pintarMiInscripcion(); }
     }).catch(function () {}).then(function () { refrescandoDetalle = false; });
   }
   function siNo(v) { return v ? '<span class="chip-si">Sí</span>' : '<span class="chip-no">No</span>'; }
@@ -725,6 +803,7 @@
     prepararSello(false, simulacionPermitida() && !posicionReciente());
   }
   function pulsarSinGps() {
+    if (!selladoAbierto()) return;
     modal('<h2>¿Problemas con el GPS?</h2><p>Si estás en el punto y el móvil no lo detecta, puedes sellar igualmente. La organización revisará la foto.</p>', [
       { texto: 'Sellar igualmente', principal: true, accion: function () { prepararSello(true, false); } },
       { texto: 'Cancelar' }
@@ -812,17 +891,17 @@
       esAcompanante: !!datos.esAcompanante, detalle: datos.detalle || null
     };
     if (!datos.demo) estado.cola.push({ tipo: 'registro' });
-    guardar(); errorAcceso(''); pintarRuta(); procesarCola();
+    guardar(); errorAcceso(''); pintarRuta(); procesarCola(); descargarRuta(true);
     toast('¡Bienvenido al desafío, ' + datos.nombre.split(' ')[0] + '!');
   }
   function accesoRuta(ev) {
     ev.preventDefault();
     var dni = normalizarDni(ev.target.dni.value);
     errorAcceso('');
-    // Usuario de demostración
-    if (R.demo && dni === normalizarDni(R.demo.dni)) {
-      var D = R.demo;
-      entrarRuta({ nombre: D.nombre + ' ' + D.apellidos, dorsal: D.dorsal, dni: dni, telefono: D.telefono, moto: D.moto, acompanante: D.acompanante, demo: true });
+    // DNI de demostración: ruta de ejemplo, sin horarios y sin enviar nada
+    var demo = esDniDemo(dni);
+    if (demo && (!C.urlServidor || !navigator.onLine)) {
+      entrarRuta({ nombre: 'Usuario de demostración', dorsal: '000', dni: dni, demo: true });
       return;
     }
     if (!dniValido(dni)) { errorAcceso('El DNI/NIE no es correcto. Revisa los números y la letra.'); return; }
@@ -844,12 +923,17 @@
     var b = $('#boton-acceso'); b.disabled = true; b.textContent = 'Comprobando…';
     llamarServidor({ accion: 'acceso', dni: dni }).then(function (res) {
       if (res.encontrado && res.esAcompanante) { errorAcceso('Este apartado es solo para el <b>conductor</b>: al tener el carnet fotográfico, el acceso con el DNI del acompañante podría provocar un error en la aplicación. Entra con el DNI del conductor principal.'); return; }
+      if (!res.encontrado && demo) { entrarRuta({ nombre: 'Usuario de demostración', dorsal: '000', dni: dni, demo: true }); return; }
       if (!res.encontrado) {
         errorAcceso('Este DNI no aparece entre las inscripciones pagadas. Si acabas de pagar espera un momento; si no, <b>inscríbete</b> o contacta con el club.');
         return;
       }
-      entrarRuta({ nombre: res.nombre, dorsal: res.numero, dni: dni, telefono: res.telefono, moto: res.moto, acompanante: res.acompanante, esAcompanante: res.esAcompanante, detalle: res.detalle });
-    }).catch(function () { errorAcceso('No se ha podido comprobar ahora mismo. Inténtalo de nuevo en unos segundos.'); })
+      guardarHorarios(res);
+      entrarRuta({ nombre: res.nombre, dorsal: res.numero, dni: dni, telefono: res.telefono, moto: res.moto, acompanante: res.acompanante, esAcompanante: res.esAcompanante, detalle: res.detalle, demo: demo });
+    }).catch(function () {
+      if (demo) { entrarRuta({ nombre: 'Usuario de demostración', dorsal: '000', dni: dni, demo: true }); return; }
+      errorAcceso('No se ha podido comprobar ahora mismo. Inténtalo de nuevo en unos segundos.');
+    })
       .then(function () { b.disabled = false; b.textContent = 'Entrar'; });
   }
 
@@ -859,6 +943,7 @@
   var enviando = false;
   function construirEnvio(item) {
     if (item.tipo === 'inscripcion') return Promise.resolve(null); // las inscripciones ya no van por la cola
+    aplicarRuta();
     var p = estado.participante || {};
     var base = { accion: item.tipo, nombre: p.nombre, dorsal: p.dorsal, dni: p.dni || '', telefono: p.telefono || '', evento: C.evento.nombre, total: TOTAL };
     if (item.tipo === 'registro') return Promise.resolve(base);
@@ -959,12 +1044,14 @@
     });
     $('#modal').addEventListener('click', function (e) { if (e.target.id === 'modal') $('#modal').hidden = true; });
 
-    window.addEventListener('online', function () { procesarCola(); });
-    document.addEventListener('visibilitychange', function () { if (!document.hidden) { procesarCola(); pintar(); } });
+    window.addEventListener('online', function () { procesarCola(); descargarRuta(true); if (actual === 'ruta') pintarRuta(); });
+    document.addEventListener('visibilitychange', function () { if (!document.hidden) { procesarCola(); descargarRuta(false); pintar(); } });
     setInterval(function () { if (estado.cola.length) procesarCola(); }, 60000);
     setInterval(function () {
       if (actual === 'raid') pintarCuentaAtras($('#raid-cuenta'), C.evento.fechaSalida);
-      if (actual === 'ruta' && estado.participante && !rutaDesbloqueada()) pintarCuentaAtras($('#ruta-cuenta'), R.desbloqueo);
+      if (actual === 'ruta' && estado.participante && !rutaDesbloqueada()) pintarCuentaAtras($('#ruta-cuenta'), horaDesbloqueo());
+      if (actual === 'carnet' && estado.participante && !selladoAbierto()) pintarCuentaAtras($('#sellar-cuenta'), horaSellado());
+      if (actual === 'carnet' && estado.participante && selladoAbierto() && !$('#sellar-espera').hidden) pintarSellar();
       if (actual === 'ruta' && estado.participante && rutaDesbloqueada() && !$('#ruta-bloqueada').hidden) pintarRuta();
     }, 1000);
 

@@ -333,3 +333,8 @@ label.casilla input { width: 22px; height: 22px; margin: 1px 0 0; accent-color: 
 .whatsapp-tarjeta { border-left-color: #25d366; }
 .whatsapp-icono { width: 110px; height: 110px; margin: 6px auto 10px; border-radius: 50%; background: #25d366; color: #fff; display: flex; align-items: center; justify-content: center; box-shadow: 4px 4px 0 var(--amarillo); }
 .boton-whatsapp-grande { display: flex; align-items: center; justify-content: center; gap: 10px; background: #25d366; border-color: #000; color: #fff; font-size: 20px; box-shadow: 3px 3px 0 var(--amarillo); }
+
+/* ---- Espera hasta la hora de las fotos (v2.6) ---- */
+.sellar-espera { margin: 12px 0; padding: 12px; border-radius: 12px; background: rgba(240,180,0,.12); border: 1px solid rgba(240,180,0,.45); text-align: center; }
+.sellar-espera .cuenta-atras { margin: 10px 0 4px; }
+#ruta-bloqueada-texto .enlace { display: inline; padding: 0; }

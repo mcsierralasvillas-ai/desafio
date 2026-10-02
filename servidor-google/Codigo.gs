@@ -32,7 +32,12 @@ var AJUSTES = {
   // Enviar al inscrito un correo de confirmación con su número
   CONFIRMAR_AL_INSCRITO: true,
   // Dirección de la app (para volver después de pagar)
-  URL_APP: 'https://mcsierralasvillas-ai.github.io/desafio/'
+  URL_APP: 'https://mcsierralasvillas-ai.github.io/desafio/',
+  // RUTA SECRETA: los puntos están en la pestaña "Ruta" de esta hoja.
+  // La app solo los recibe un CONDUCTOR inscrito y pagado, y solo desde esta fecha:
+  DESBLOQUEO_RUTA: '2027-05-07T18:00:00+02:00',   // viernes 7 de mayo, 18:00
+  // Desde cuándo se pueden hacer las fotos de sellado:
+  INICIO_SELLADO: '2027-05-08T05:00:00+02:00'     // sábado 8 de mayo, 05:00
 };
 
 // PRECIOS (en euros). Deben coincidir con js/config.js de la app.
@@ -61,6 +66,16 @@ var S = {}; COLS_SOL.forEach(function (c, i) { S[c] = i; });
 var COLS_INSC = ['Nº / Dorsal', 'Fecha de pago', 'Nombre', 'Apellidos', 'DNI', 'Teléfono', 'Email', 'Localidad', 'Moto', 'Talla',
   'Acompañante', 'Nombre acompañante', 'DNI acompañante', 'Talla acompañante', 'Cena piloto', 'Cena acompañante', 'Personas en la cena',
   'Importe pagado (€)', 'Método de pago', 'Id solicitud'];
+// Pestaña "Ruta": una fila por parada. Tipo = SALIDA, PUNTO o LLEGADA (en ese orden).
+var COLS_RUTA = ['Tipo', 'Id (sin espacios)', 'Nombre', 'Lugar', 'Latitud', 'Longitud', 'Pista para la foto', 'Enlace Google Maps del tramo (opcional)'];
+// La ruta REAL no se escribe aquí (este archivo está en GitHub y es público).
+// Va en el archivo RutaPrivada.gs (solo en Apps Script, nunca en GitHub) o
+// directamente en la pestaña "Ruta" de la hoja. Esto es solo un ejemplo.
+var RUTA_EJEMPLO = [
+  ['SALIDA', 'salida', 'Punto de salida', 'Villacarrillo (Jaén)', 38.1196247, -3.0786158, '', ''],
+  ['PUNTO', 'punto1', 'Punto 1 (ejemplo)', 'Rellenar en la hoja', 38.13333, -2.78333, '', ''],
+  ['LLEGADA', 'llegada', 'Llegada', 'Villacarrillo (Jaén)', 38.1196247, -3.0786158, '', '']
+];
 var COLS_SELLO = ['Recibido', 'Dorsal', 'Nombre', 'Orden', 'Punto', 'Hora de la foto', 'Distancia al punto (m)', 'Precisión GPS (m)', 'Sin GPS', 'Simulado (prueba)', 'Foto', 'Ubicación', 'Id punto'];
 
 function doGet() {
@@ -75,6 +90,7 @@ function doPost(e) {
     if (d.accion === 'inscripcion') return responder(solicitar(d));
     if (d.accion === 'estadoPago') return responder(estadoPago(d));
     if (d.accion === 'acceso') return responder(acceso(d));
+    if (d.accion === 'ruta') return responder(rutaParaConductor(d));
     if (!d.dorsal || !d.nombre) return responder({ ok: false, error: 'Faltan nombre o dorsal' });
     d.dorsal = String(d.dorsal).trim().toUpperCase();
     if (d.accion === 'registro') return responder(registrar(d));
@@ -312,6 +328,7 @@ function acceso(d) {
   var fecha = v[1] instanceof Date ? Utilities.formatDate(v[1], 'Europe/Madrid', 'dd/MM/yyyy HH:mm') : String(v[1] || '');
   return {
     ok: true, encontrado: true, numero: v[0], esAcompanante: esAcomp,
+    desbloqueoRuta: AJUSTES.DESBLOQUEO_RUTA, inicioSellado: AJUSTES.INICIO_SELLADO,
     nombre: esAcomp ? String(v[11]) : (v[2] + ' ' + v[3]).trim(), telefono: String(v[5] || ''),
     moto: String(v[8] || ''), acompanante: esAcomp ? '' : String(v[11] || ''),
     // Datos completos para el apartado "Mi inscripción" de la app
@@ -323,6 +340,43 @@ function acceso(d) {
       importe: Number(v[17]) || 0, metodo: String(v[18] || ''), fechaPago: fecha
     }
   };
+}
+
+// ------------------ Ruta secreta ------------------
+function hojaRuta() {
+  var libro = SpreadsheetApp.getActiveSpreadsheet();
+  var h = libro.getSheetByName('Ruta');
+  if (!h) {
+    h = hoja('Ruta', COLS_RUTA);
+    var filas = (typeof RUTA_PRIVADA !== 'undefined') ? RUTA_PRIVADA : RUTA_EJEMPLO;
+    filas.forEach(function (f) { h.appendRow(f); });
+  }
+  return h;
+}
+function leerRuta() {
+  var filas = hojaRuta().getDataRange().getValues().slice(1);
+  var ruta = { salida: null, puntos: [], llegada: null };
+  filas.forEach(function (f) {
+    var tipo = String(f[0]).trim().toUpperCase();
+    if (!tipo || f[4] === '' || f[5] === '') return;
+    var p = { id: String(f[1] || '').trim() || ('p' + (ruta.puntos.length + 1)), nombre: String(f[2]), lugar: String(f[3] || ''),
+      lat: Number(f[4]), lng: Number(f[5]), pista: String(f[6] || '') };
+    if (f[7]) p.enlaceMaps = String(f[7]).trim();
+    if (tipo === 'SALIDA') ruta.salida = p; else if (tipo === 'LLEGADA') ruta.llegada = p; else ruta.puntos.push(p);
+  });
+  if (!ruta.llegada) ruta.llegada = ruta.salida;
+  return ruta;
+}
+/** Entrega la ruta SOLO a un conductor inscrito y pagado, y SOLO desde DESBLOQUEO_RUTA */
+function rutaParaConductor(d) {
+  var dni = normalizarDni(d.dni);
+  var r = dni ? buscarInscrito(dni) : null;
+  if (!r) return { ok: false, error: 'No inscrito' };
+  if (normalizarDni(r.v[12]) === dni) return { ok: false, error: 'Solo el conductor puede descargar la ruta' };
+  var horarios = { desbloqueoRuta: AJUSTES.DESBLOQUEO_RUTA, inicioSellado: AJUSTES.INICIO_SELLADO };
+  if (new Date() < new Date(AJUSTES.DESBLOQUEO_RUTA)) { horarios.ok = true; horarios.bloqueada = true; return horarios; }
+  horarios.ok = true; horarios.ruta = leerRuta();
+  return horarios;
 }
 
 // ------------------ Stripe ------------------
@@ -511,6 +565,7 @@ function limpiar(t) {
 
 /** Ejecuta esta función UNA VEZ desde el editor para dar permisos y crear las hojas. */
 function probarServidor() {
+  hojaRuta();
   hoja('Solicitudes', COLS_SOL);
   hoja('Inscritos', COLS_INSC);
   hoja('Participantes', COLS_PART);

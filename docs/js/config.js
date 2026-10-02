@@ -150,7 +150,9 @@ window.CONFIG = {
   // ----------------------------------------------------------------- RUTA
   ruta: {
     modo: 'tramos',                                   // 'tramos' o 'completa'
-    desbloqueo: '2027-05-07T08:00:00+02:00',          // cuándo se puede ver la ruta
+    desbloqueo: '2027-05-07T18:00:00+02:00',          // viernes 18:00: aparece el primer punto
+    inicioSellado: '2027-05-08T05:00:00+02:00',       // sábado 05:00: ya se pueden hacer las fotos
+    // (el servidor manda sus propias horas y tienen prioridad sobre estas)
     radioSelladoMetros: 250,
     codigoOrganizacion: 'SIERRA2027',                 // ¡CAMBIAR!
 
@@ -163,24 +165,31 @@ window.CONFIG = {
       zoomMax: 18,
       zoomsSinConexion: [9, 10, 11, 12, 13]
     },
-    salida: { nombre: 'Paseo de Santo Cristo (Villacarrillo)', lat: 38.1196247, lng: -3.0786158 },
-    // Cada punto es el FINAL de un tramo (el tramo 1 va de la salida al punto 1).
-    // enlaceMaps (opcional): pega aquí el enlace de Google Maps de ese tramo
-    //   tal cual lo copias de Google Maps, y se abrirá exactamente esa ruta.
-    // via (opcional): puntos de paso [[lat, lng], ...] si no hay enlaceMaps.
-    puntos: [
-      { id: 'guadalen', nombre: 'Presa de Guadalén', lugar: 'Vilches (Jaén)', lat: 38.1617424, lng: -3.4785971, pista: 'Haz la foto con el muro de la presa o el embalse de fondo.' },
-      { id: 'tamujoso', nombre: 'Playa del Tamujoso', lugar: 'Embalse del Rumblar · Baños de la Encina (Jaén)', lat: 38.179766, lng: -3.795534, pista: 'Que se vea el embalse del Rumblar.' },
-      { id: 'encinarejo', nombre: 'Presa de El Encinarejo', lugar: 'Andújar (Jaén)', lat: 38.1648275, lng: -3.9934237, pista: 'Foto con la presa del Jándula de fondo.' },
-      { id: 'montoro', nombre: 'Presa del Río Montoro', lugar: 'Sierra Madrona (Ciudad Real)', lat: 38.5247688, lng: -4.0988583, pista: 'Último sello. ¡Reposta antes de subir, hay pocas gasolineras!' }
-    ],
-    llegada: { nombre: 'Pub Guzzi (Villacarrillo)', lat: 38.1196247, lng: -3.0786158 }
+    // La ruta REAL no está aquí (sería pública). Está en la pestaña "Ruta" de la
+    // hoja de Google del club y el servidor solo se la da al conductor inscrito
+    // y pagado a partir de 'desbloqueo'. Al descargarla queda guardada en el
+    // móvil y funciona sin cobertura.
+
+    // RUTA DE DEMOSTRACIÓN (ruta 2026) para enseñar la app con estos DNI.
+    // Con ellos no hay horarios, se puede simular la llegada y no se envía nada.
+    demo: {
+      dnis: ['00000000T'],
+      salida: { nombre: 'Villacarrillo', lat: 38.1196247, lng: -3.0786158 },
+      puntos: [
+        { id: 'demo-tranco', nombre: 'Pantano del Tranco', lugar: 'Hornos (Jaén)', lat: 38.13333, lng: -2.78333, pista: 'Foto con el embalse del Tranco de fondo.' },
+        { id: 'demo-riopar', nombre: 'Riópar', lugar: 'Albacete', lat: 38.4982409, lng: -2.4171658, pista: 'Foto en el pueblo o en el Nacimiento del Mundo.' },
+        { id: 'demo-yeste', nombre: 'Yeste', lugar: 'Albacete', lat: 38.3654376, lng: -2.321546, pista: 'Que se vea el castillo de Yeste.' },
+        { id: 'demo-pontones', nombre: 'Pontones', lugar: 'Santiago-Pontones (Jaén)', lat: 38.1178271, lng: -2.6701259, pista: 'Último sello antes de volver.' }
+      ],
+      llegada: { nombre: 'Villacarrillo', lat: 38.1196247, lng: -3.0786158 }
+    }
   },
 
   // ------------------------------------------------------------- SERVIDOR
   // URL de Google Apps Script (termina en /exec). Vacío = no se envía nada.
   urlServidor: 'https://script.google.com/macros/s/AKfycbzgsB9rOmXZY9xpGhpjYf_zZPqJR0BuUeSzk-vV-E_nhl5NHksDHWs-L5Qe8syVw5U7Uw/exec',
 
-  // MODO PRUEBA: ruta desbloqueada y botón "Simular llegada". ¡false en el evento!
-  modoPrueba: true
+  // MODO PRUEBA: sin horarios y con botón "Simular llegada" para todos.
+  // Para la demo del club no hace falta (el DNI de demo ya lo tiene).
+  modoPrueba: false
 };

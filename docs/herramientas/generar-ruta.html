@@ -36,7 +36,7 @@
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="../js/config.js"></script>
 <script>
-  var C = window.CONFIG.ruta;
+  var C = window.CONFIG.ruta.puntos ? window.CONFIG.ruta : window.CONFIG.ruta.demo; // la ruta real ya no está en config.js
   var paradas = [C.salida].concat(C.puntos, [C.llegada]);
   var mapa = L.map('mapa').setView([C.salida.lat, C.salida.lng], 9);
   L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 18, attribution: '&copy; OpenStreetMap' }).addTo(mapa);

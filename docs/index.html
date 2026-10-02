@@ -16,7 +16,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anton&family=Barlow+Condensed:ital,wght@0,500;0,700;1,700;1,800&family=Barlow:wght@400;600;700&display=swap" media="print" onload="this.media='all'">
-  <link rel="stylesheet" href="css/app.css?v=2.5.0">
+  <link rel="stylesheet" href="css/app.css?v=2.6.0">
 </head>
 <body>
 
@@ -187,8 +187,9 @@
         </div>
 
         <div id="ruta-bloqueada" class="tarjeta centrado" hidden>
-          <h3>La ruta se desbloquea en</h3>
+          <h3 id="ruta-bloqueada-titulo">La ruta aparece en</h3>
           <div class="cuenta-atras" id="ruta-cuenta"></div>
+          <p class="suave" id="ruta-bloqueada-texto"></p>
         </div>
 
         <nav class="menu-grande">
@@ -237,6 +238,11 @@
         <div class="panel-nombre" id="sellar-nombre"></div>
         <div class="panel-distancia" id="sellar-distancia"></div>
         <div class="panel-pista" id="sellar-pista"></div>
+        <div class="sellar-espera" id="sellar-espera" hidden>
+          <b>⏰ Fotos bloqueadas hasta la salida</b>
+          <div class="cuenta-atras" id="sellar-cuenta"></div>
+          <p class="suave" id="sellar-espera-texto"></p>
+        </div>
         <button class="boton boton-principal" id="boton-sellar">📷 Hacer la foto y sellar</button>
         <button class="enlace" id="boton-sin-gps">¿El GPS no te detecta en el punto?</button>
         <button class="boton boton-prueba" id="boton-simular" hidden>Simular llegada (demostración)</button>
@@ -401,7 +407,7 @@
   </div>
   <div class="toast" id="toast" hidden></div>
 
-  <script src="js/config.js?v=2.5.0"></script>
-  <script src="js/app.js?v=2.5.0"></script>
+  <script src="js/config.js?v=2.6.0"></script>
+  <script src="js/app.js?v=2.6.0"></script>
 </body>
 </html>
