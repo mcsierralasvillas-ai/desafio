@@ -41,7 +41,7 @@ window.CONFIG = {
       'Organizamos eventos solidarios, como comidas para personas desfavorecidas junto al Motoclub Olivo.',
       'Hemos sorteado entre socios y amigos una moto Café Racer.',
       'Pedro Linares, piloto del club, aparece en el Cuadro de Honor de la FAM: 3º en el Trofeo Nacional de Cross Country (Senior B 4T).',
-      'Las rutas del raid recorren el Parque Natural de Cazorla, Segura y Las Villas, el espacio protegido más grande de España.'
+      'Nuestras rutas recorren el Parque Natural de Cazorla, Segura y Las Villas, el espacio protegido más grande de España, y en 2027 el Raid se va a Sierra Morena.'
       // PENDIENTE de confirmar: organización de una prueba del mundial de motocross (2006/2007)
     ],
     // Galería de fotos (la primera sale grande). Fotos en la carpeta club/
@@ -116,7 +116,7 @@ window.CONFIG = {
     fechaSalida: '2027-05-08T08:00:00+02:00',          // para la cuenta atrás
     lugarSalida: 'Paseo de Santo Cristo (Villacarrillo)',
     lugarFinal: 'Pub Guzzi (Villacarrillo)',
-    resumen: 'Una ruta 100% on road por la Sierra de Cazorla, Segura y Las Villas y Sierra Morena, uniendo presas y embalses. La ruta es sorpresa: se va desvelando en la app según vas sellando cada punto con una foto. No es una carrera: se trata de disfrutar.',
+    resumen: 'Una ruta 100% on road por Sierra Morena, entre el Condado de Jaén, el Parque Natural de la Sierra de Andújar y la Sierra Madrona (Ciudad Real), uniendo presas y embalses. La ruta es sorpresa: se va desvelando en la app según vas sellando cada punto con una foto. No es una carrera: se trata de disfrutar.',
     programa: [
       { dia: 'Viernes', hora: 'Desde las 18:00', titulo: 'Bienvenida y KDD motera', texto: 'Paseo de Santo Cristo. Entrega del pack de bienvenida y dorsales, música, sorteo y ambiente motero.' },
       { dia: 'Sábado', hora: '07:00 – 08:00', titulo: 'Últimas inscripciones y salida', texto: 'Paseo de Santo Cristo. La app desbloquea el primer punto de la ruta.' },
@@ -133,7 +133,8 @@ window.CONFIG = {
     alojamiento: 'https://drive.google.com/file/d/1zj3bdQRfXXiJfaPYlIVhl2DhWXRX_xnT/view?usp=sharing',
     patrocinadores: ['Paradise Motos (Jaén)', 'Yamaha Xauen Motor'],  // REVISAR para 2027
     sorteo: 'Durante la KDD del viernes habrá sorteo de premios de nuestros patrocinadores. Cada inscrito recibe una papeleta y se pueden comprar más allí mismo.',
-    video: 'https://www.youtube.com/watch?v=wcieWYd9Jk4'   // "Conoce la Sierra de Cazorla, Segura y Las Villas"
+    video: 'https://www.youtube.com/watch?v=-BSWunuWw68',   // "Mucho que ver, Sierra de Andújar, Jaén" (Canal Sur Turismo)
+    videoTexto: 'Sierra Morena y la Sierra de Andújar: el escenario del Raid 2027.'
   },
 
   // ----------------------------------------------------------- INSCRIPCIÓN

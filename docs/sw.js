@@ -1,12 +1,12 @@
 /* Service worker: la app abre y funciona sin conexión.
    IMPORTANTE: cada vez que subas cambios, sube el número de VERSION. */
-var VERSION = 'v15';
+var VERSION = 'v16';
 var CACHE_APP = 'mcslv-app-' + VERSION;
 var CACHE_EXTERNO = 'mcslv-externo';
 var CACHE_TESELAS = 'mcslv-teselas';
 
 var ARCHIVOS_APP = [
-  './', 'index.html', 'css/app.css?v=2.7.1', 'js/config.js?v=2.7.1', 'js/app.js?v=2.7.1', 'manifest.webmanifest',
+  './', 'index.html', 'css/app.css?v=2.8.0', 'js/config.js?v=2.8.0', 'js/app.js?v=2.8.0', 'manifest.webmanifest',
   'icons/logo.png', 'icons/icon-192.png', 'icons/icon-512.png', 'icons/apple-touch-icon.png'
 ];
 
@@ -52,6 +52,9 @@ self.addEventListener('fetch', function (e) {
     }));
     return;
   }
+
+  // Los vídeos van directos (el iPhone pide trozos del vídeo y no deben pasar por la caché)
+  if (/\.mp4$/i.test(url.pathname) || req.headers.has('range')) return;
 
   // Archivos propios: primero internet (lo último), si no hay, lo guardado
   // cache: 'no-cache' → siempre pregunta a GitHub si hay versión nueva (no usa la caché del navegador)

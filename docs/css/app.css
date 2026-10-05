@@ -357,3 +357,16 @@ label.casilla input { width: 22px; height: 22px; margin: 1px 0 0; accent-color: 
 .club-galeria figure:first-child { grid-column: 1 / -1; }
 .club-galeria img { display: block; width: 100%; aspect-ratio: 4 / 3; object-fit: cover; }
 .club-galeria figcaption { font-size: 12px; padding: 6px 8px; color: #ccc; }
+
+/* ---- Cómo funciona la app (v2.8) ---- */
+.boton-menu-guia { background: linear-gradient(180deg, #2a2a2a, #111); border-color: var(--amarillo); }
+.boton-menu-guia .boton-menu-texto { color: var(--amarillo); }
+.guia-video { display: block; width: 100%; max-height: 70vh; border-radius: 12px; background: #000; margin: 10px 0 4px; }
+.guia-indice { display: flex; gap: 8px; flex-wrap: wrap; margin: 0 0 8px; }
+.guia-indice a { flex: 1 1 auto; text-align: center; padding: 10px 8px; border-radius: 999px; background: #1b1b1b; border: 1px solid var(--rojo); color: #fff; text-decoration: none; font-weight: 700; font-size: 14px; }
+.guia-seccion { margin: 22px 0 10px; color: var(--amarillo); text-transform: uppercase; letter-spacing: .03em; border-bottom: 3px solid var(--rojo); padding-bottom: 6px; scroll-margin-top: 80px; }
+.guia-paso { background: #141414; border: 1px solid rgba(255,255,255,.08); border-left: 4px solid var(--rojo); border-radius: 12px; padding: 14px; margin: 0 0 14px; }
+.guia-texto h4 { margin: 0 0 6px; font-size: 18px; }
+.guia-texto p { margin: 0 0 12px; color: #ddd; line-height: 1.45; }
+.guia-num { float: left; width: 34px; height: 34px; margin: 0 10px 4px 0; border-radius: 50%; background: var(--amarillo); color: #111; font-weight: 900; font-size: 18px; display: flex; align-items: center; justify-content: center; }
+.guia-paso img { display: block; width: 72%; max-width: 300px; margin: 0 auto; border-radius: 18px; border: 3px solid #333; box-shadow: 0 6px 18px rgba(0,0,0,.5); }

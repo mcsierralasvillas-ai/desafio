@@ -16,7 +16,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anton&family=Barlow+Condensed:ital,wght@0,500;0,700;1,700;1,800&family=Barlow:wght@400;600;700&display=swap" media="print" onload="this.media='all'">
-  <link rel="stylesheet" href="css/app.css?v=2.7.1">
+  <link rel="stylesheet" href="css/app.css?v=2.8.0">
 </head>
 <body>
 
@@ -76,6 +76,10 @@
         <button class="boton-menu" data-ir="evento">
           <span class="boton-menu-texto">INFORMACIÓN DEL EVENTO</span>
           <span class="boton-menu-sub">Programa, precios y avisos</span>
+        </button>
+        <button class="boton-menu boton-menu-guia" data-ir="guia">
+          <span class="boton-menu-texto">CÓMO FUNCIONA LA APP</span>
+          <span class="boton-menu-sub">Paso a paso para la ruta · con vídeo</span>
         </button>
       </nav>
     </section>
@@ -305,6 +309,80 @@
       </div>
     </section>
 
+    <!-- ================= CÓMO FUNCIONA LA APP ================= -->
+    <section class="pantalla" id="p-guia" hidden>
+      <div class="tarjeta guia-intro">
+        <h2>Cómo funciona la app</h2>
+        <p>Todo lo que necesitas para el Raid, paso a paso. Las capturas usan la <b>ruta de demostración</b>: la ruta real es sorpresa.</p>
+        <video class="guia-video" id="guia-video" controls playsinline preload="none" poster="guia/poster.jpg">
+          <source src="guia/video.mp4" type="video/mp4">
+        </video>
+        <p class="suave centrado" id="guia-video-pie">Vídeo explicativo paso a paso</p>
+      </div>
+      <nav class="guia-indice"><a href="#guia-0" data-guia="0">Inscripción</a><a href="#guia-1" data-guia="1">Entrar en la ruta</a><a href="#guia-2" data-guia="2">Durante la ruta</a></nav>
+      <h3 class="guia-seccion" id="guia-0">Inscripción</h3>
+      <article class="guia-paso">
+        <div class="guia-texto"><span class="guia-num">1</span><h4>Entra en Raid 2027 → Inscripción</h4><p>Desde el menú principal pulsa <b>RAID 2027</b> y después <b>INSCRIPCIÓN</b>.</p></div>
+        <img src="guia/01.jpg" alt="Entra en Raid 2027 → Inscripción" loading="lazy">
+      </article>
+      <article class="guia-paso">
+        <div class="guia-texto"><span class="guia-num">2</span><h4>Rellena tus datos</h4><p>Nombre, apellidos, <b>DNI</b> (con él entrarás luego en la ruta), teléfono, correo, moto y talla. Si vas con acompañante, marca la casilla y pon también su DNI.</p></div>
+        <img src="guia/02.jpg" alt="Rellena tus datos" loading="lazy">
+      </article>
+      <article class="guia-paso">
+        <div class="guia-texto"><span class="guia-num">3</span><h4>Cena, condiciones y pago</h4><p>Marca quién viene a la cena, revisa el total, lee y acepta las condiciones y pulsa <b>Continuar al pago</b>. Puedes pagar con <b>Apple Pay, Google Pay, Bizum o tarjeta</b>.</p></div>
+        <img src="guia/03.jpg" alt="Cena, condiciones y pago" loading="lazy">
+      </article>
+      <article class="guia-paso">
+        <div class="guia-texto"><span class="guia-num">4</span><h4>¡Inscripción confirmada!</h4><p>Al pagar vuelves a la app y ves tu <b>número de dorsal</b>. Además te llega un correo con todos tus datos y lo que has pagado. Solo valen las inscripciones pagadas.</p></div>
+        <img src="guia/04.jpg" alt="¡Inscripción confirmada!" loading="lazy">
+      </article>
+      <h3 class="guia-seccion" id="guia-1">Entrar en la ruta</h3>
+      <article class="guia-paso">
+        <div class="guia-texto"><span class="guia-num">5</span><h4>Entra con tu DNI</h4><p>Ve a <b>RAID 2027 → RUTA</b> y escribe el <b>DNI del conductor</b>. El acompañante no puede entrar: el carnet fotográfico es solo del conductor.</p></div>
+        <img src="guia/05.jpg" alt="Entra con tu DNI" loading="lazy">
+      </article>
+      <article class="guia-paso">
+        <div class="guia-texto"><span class="guia-num">6</span><h4>Antes de la salida: cuenta atrás</h4><p>Hasta el <b>viernes a las 18:00</b> verás una cuenta atrás. A esa hora aparece el primer punto, y las fotos se pueden hacer desde el <b>sábado a las 05:00</b>. Abre la app el viernes con cobertura para que se descargue la ruta.</p></div>
+        <img src="guia/06.jpg" alt="Antes de la salida: cuenta atrás" loading="lazy">
+      </article>
+      <article class="guia-paso">
+        <div class="guia-texto"><span class="guia-num">7</span><h4>Tu menú de la ruta</h4><p>Arriba tienes tus datos y tu <b>dorsal</b>. Debajo: <b>Carnet fotográfico</b>, <b>Puntos de ruta</b>, <b>Mi inscripción</b> y el grupo de <b>WhatsApp</b>.</p></div>
+        <img src="guia/07.jpg" alt="Tu menú de la ruta" loading="lazy">
+      </article>
+      <h3 class="guia-seccion" id="guia-2">Durante la ruta</h3>
+      <article class="guia-paso">
+        <div class="guia-texto"><span class="guia-num">8</span><h4>Puntos de ruta → Google Maps</h4><p>En <b>Puntos de ruta</b> ves el tramo que toca. Púlsalo y se abre <b>Google Maps</b> con el camino hasta el siguiente punto. Los demás tramos están ocultos hasta que selles.</p></div>
+        <img src="guia/08.jpg" alt="Puntos de ruta → Google Maps" loading="lazy">
+      </article>
+      <article class="guia-paso">
+        <div class="guia-texto"><span class="guia-num">9</span><h4>Llega al punto y haz la foto</h4><p>En el <b>Carnet fotográfico</b> verás a cuánta distancia estás. Cuando llegues (el GPS lo detecta), pulsa <b>Hacer la foto y sellar</b>. Que se vea bien el sitio.</p></div>
+        <img src="guia/09.jpg" alt="Llega al punto y haz la foto" loading="lazy">
+      </article>
+      <article class="guia-paso">
+        <div class="guia-texto"><span class="guia-num">10</span><h4>Confirma la foto</h4><p>Revisa la foto: <b>una vez sellada no se puede borrar</b>. Marca la casilla y pulsa <b>Sellar con esta foto</b>, o <b>Repetir la foto</b>.</p></div>
+        <img src="guia/10.jpg" alt="Confirma la foto" loading="lazy">
+      </article>
+      <article class="guia-paso">
+        <div class="guia-texto"><span class="guia-num">11</span><h4>Se desvela el siguiente punto</h4><p>Al sellar aparece el siguiente tramo, con el botón para abrirlo en Google Maps. Repite en cada punto.</p></div>
+        <img src="guia/11.jpg" alt="Se desvela el siguiente punto" loading="lazy">
+      </article>
+      <article class="guia-paso">
+        <div class="guia-texto"><span class="guia-num">12</span><h4>¡Desafío completado!</h4><p>Con todos los sellos, pon rumbo a meta. Enseña tu carnet al llegar y te entregamos el diploma.</p></div>
+        <img src="guia/12.jpg" alt="¡Desafío completado!" loading="lazy">
+      </article>
+      <div class="tarjeta tarjeta-destacada">
+        <h3>Consejos</h3>
+        <ul class="lista">
+          <li><b>Instala la app:</b> en iPhone, Safari → Compartir → <i>Añadir a pantalla de inicio</i>. En Android, Chrome → menú ⋮ → <i>Instalar aplicación</i>.</li>
+          <li>Da <b>permiso de ubicación</b> y de <b>cámara</b> cuando te lo pida.</li>
+          <li>Hay zonas sin cobertura: las fotos se guardan en el móvil y se envían solas cuando vuelve la conexión.</li>
+          <li>Si el GPS no te detecta en el punto, usa <i>«¿El GPS no te detecta en el punto?»</i> en el carnet.</li>
+        </ul>
+      </div>
+      <button class="boton boton-principal" data-ir="inscripcion">Inscribirme ahora</button>
+    </section>
+
     <!-- ================= INFORMACIÓN DEL EVENTO ================= -->
     <section class="pantalla" id="p-evento" hidden>
       <div class="tarjeta tarjeta-destacada">
@@ -338,7 +416,7 @@
       </div>
       <div class="tarjeta" id="ev-bloque-video">
         <h3>Conoce la sierra</h3>
-        <p class="suave">Sierra de Cazorla, Segura y Las Villas: el escenario del Raid.</p>
+        <p class="suave" id="ev-video-texto"></p>
         <a class="boton" id="ev-video" target="_blank" rel="noopener">▶ Ver vídeo</a>
       </div>
       <div class="tarjeta" id="ev-bloque-alojamiento">
@@ -417,7 +495,7 @@
   </div>
   <div class="toast" id="toast" hidden></div>
 
-  <script src="js/config.js?v=2.7.1"></script>
-  <script src="js/app.js?v=2.7.1"></script>
+  <script src="js/config.js?v=2.8.0"></script>
+  <script src="js/app.js?v=2.8.0"></script>
 </body>
 </html>

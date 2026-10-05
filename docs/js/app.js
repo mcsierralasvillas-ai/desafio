@@ -8,7 +8,7 @@
 
   var C = window.CONFIG;
   var R = C.ruta;
-  var VERSION_APP = '2.7.1';
+  var VERSION_APP = '2.8.0';
   var CLAVE = 'mcslv_estado_v2';
   var TOTAL = 0; // nº de puntos de la ruta cargada (ver aplicarRuta)
 
@@ -147,6 +147,7 @@
     miinscripcion: { titulo: 'Mi inscripción', padre: 'ruta' },
     whatsapp: { titulo: 'WhatsApp', padre: 'ruta' },
     evento: { titulo: 'Información del evento', padre: 'raid' },
+    guia: { titulo: 'Cómo funciona', padre: 'raid' },
     club: { titulo: 'El club', padre: 'inicio' },
     socio: { titulo: 'Socio', padre: 'inicio' },
     contacto: { titulo: 'Contacto', padre: 'inicio' }
@@ -181,6 +182,7 @@
     if (actual === 'miinscripcion') pintarMiInscripcion();
     if (actual === 'whatsapp') pintarWhatsapp();
     if (actual === 'evento') pintarEvento();
+    if (actual !== 'guia') { var gv = $('#guia-video'); if (gv && !gv.paused) gv.pause(); }
     if (actual === 'club') pintarClub();
     if (actual === 'socio') pintarSocio();
     if (actual === 'contacto') pintarContacto();
@@ -229,6 +231,7 @@
     $('#ev-sorteo').textContent = E.sorteo || '';
     $('#ev-bloque-video').hidden = !E.video;
     $('#ev-video').href = E.video || '#';
+    $('#ev-video-texto').textContent = E.videoTexto || '';
     $('#ev-bloque-alojamiento').hidden = !E.alojamiento;
     $('#ev-alojamiento').href = E.alojamiento || '#';
     $('#ev-bloque-patrocinadores').hidden = !(E.patrocinadores && E.patrocinadores.length);
@@ -1015,6 +1018,10 @@
       if (el) { e.preventDefault(); ir(el.getAttribute('data-ir')); }
     });
     $('#boton-atras').addEventListener('click', atras);
+    document.addEventListener('click', function (e) {
+      var a = e.target.closest && e.target.closest('[data-guia]'); if (!a) return;
+      e.preventDefault(); var t = document.getElementById('guia-' + a.getAttribute('data-guia')); if (t) t.scrollIntoView({ behavior: 'smooth' });
+    });
     window.addEventListener('popstate', function () { ir((location.hash || '#inicio').slice(1), true); });
 
     $('#form-inscripcion').addEventListener('submit', enviarInscripcion);
