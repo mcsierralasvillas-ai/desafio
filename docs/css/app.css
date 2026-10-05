@@ -338,3 +338,22 @@ label.casilla input { width: 22px; height: 22px; margin: 1px 0 0; accent-color: 
 .sellar-espera { margin: 12px 0; padding: 12px; border-radius: 12px; background: rgba(240,180,0,.12); border: 1px solid rgba(240,180,0,.45); text-align: center; }
 .sellar-espera .cuenta-atras { margin: 10px 0 4px; }
 #ruta-bloqueada-texto .enlace { display: inline; padding: 0; }
+
+/* ---- Información del club (v2.7) ---- */
+.club-cifras { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin: 0 0 16px; }
+.club-cifras .cifra { background: #141414; border: 2px solid var(--amarillo, #ffd400); border-radius: 12px; padding: 12px 6px; text-align: center; transform: skew(-4deg); }
+.club-cifras .cifra b { display: block; font-family: var(--fuente-titulo, inherit); font-size: 30px; line-height: 1; color: var(--amarillo, #ffd400); }
+.club-cifras .cifra small { display: block; margin-top: 4px; text-transform: uppercase; font-size: 11px; letter-spacing: .04em; color: #ddd; }
+.linea-tiempo { list-style: none; margin: 0; padding: 0 0 0 18px; border-left: 3px solid var(--rojo, #e30613); }
+.linea-tiempo li { position: relative; margin: 0 0 14px; }
+.linea-tiempo li::before { content: ''; position: absolute; left: -26px; top: 4px; width: 13px; height: 13px; border-radius: 50%; background: var(--amarillo, #ffd400); border: 2px solid #111; }
+.linea-tiempo b { display: block; color: var(--amarillo, #ffd400); font-size: 18px; }
+.curiosidades { margin: 0; padding-left: 0; list-style: none; }
+.curiosidades li { padding: 8px 0 8px 30px; position: relative; border-bottom: 1px solid rgba(255,255,255,.08); }
+.curiosidades li:last-child { border-bottom: 0; }
+.curiosidades li::before { content: '🏍️'; position: absolute; left: 0; top: 7px; }
+.club-galeria { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 0 0 16px; }
+.club-galeria figure { margin: 0; border-radius: 10px; overflow: hidden; background: #111; }
+.club-galeria figure:first-child { grid-column: 1 / -1; }
+.club-galeria img { display: block; width: 100%; aspect-ratio: 4 / 3; object-fit: cover; }
+.club-galeria figcaption { font-size: 12px; padding: 6px 8px; color: #ccc; }

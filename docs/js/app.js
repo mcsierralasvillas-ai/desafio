@@ -8,7 +8,7 @@
 
   var C = window.CONFIG;
   var R = C.ruta;
-  var VERSION_APP = '2.6.1';
+  var VERSION_APP = '2.7.1';
   var CLAVE = 'mcslv_estado_v2';
   var TOTAL = 0; // nº de puntos de la ruta cargada (ver aplicarRuta)
 
@@ -238,6 +238,15 @@
   function pintarClub() {
     $('#club-lema').textContent = C.club.lema;
     $('#club-presentacion').innerHTML = '<h3>Quiénes somos</h3>' + C.club.presentacion.map(function (p) { return '<p>' + esc(p) + '</p>'; }).join('');
+    var K = C.club, f = new Date(K.fundacion), hoy = new Date();
+    var anos = hoy.getFullYear() - f.getFullYear() - ((hoy.getMonth() < f.getMonth() || (hoy.getMonth() === f.getMonth() && hoy.getDate() < f.getDate())) ? 1 : 0);
+    $('#club-cifras').innerHTML = [[f.getFullYear(), 'fundado'], [anos, 'años rodando'], [K.socios || '', 'socios']].filter(function (x) { return x[0]; })
+      .map(function (x) { return '<div class="cifra"><b>' + esc(x[0]) + '</b><small>' + esc(x[1]) + '</small></div>'; }).join('');
+    $('#club-historia').innerHTML = (K.historia || []).map(function (h) { return '<li><b>' + esc(h[0]) + '</b><span>' + esc(h[1]) + '</span></li>'; }).join('');
+    $('#club-curiosidades').innerHTML = (K.curiosidades || []).map(function (t) { return '<li>' + esc(t) + '</li>'; }).join('');
+    var g = K.galeria || [];
+    $('#club-galeria').hidden = !g.length;
+    $('#club-galeria').innerHTML = g.map(function (x) { return '<figure><img src="' + esc(x.foto) + '" alt="' + esc(x.pie || '') + '" loading="lazy">' + (x.pie ? '<figcaption>' + esc(x.pie) + '</figcaption>' : '') + '</figure>'; }).join('');
     $('#club-actividades').innerHTML = C.club.actividades.map(function (a) {
       return '<div class="actividad"><b>' + esc(a.nombre) + '</b><div class="suave">' + esc(a.texto) + '</div></div>';
     }).join('');

@@ -13,18 +13,55 @@ window.CONFIG = {
     nombre: 'Motorclub Sierra Las Villas',
     lema: 'Gasolina, compañerismo y pasión por las motos',
     localidad: 'Villacarrillo (Jaén)',
+    fundacion: '1991-05-10',          // inscrito oficialmente el 10 de mayo de 1991
+    socios: 100,
     // Texto de "Información del club". Cada elemento es un párrafo.
     presentacion: [
-      'Somos el Motorclub Sierra Las Villas, un club motero de Villacarrillo (Jaén), a las puertas de la Sierra de Cazorla, Segura y Las Villas.',
-      'Nos une la gasolina, el compañerismo y la pasión por las motos: salimos a rodar, organizamos rutas y eventos y damos a conocer las carreteras de nuestra sierra.',
-      'COMPLETAR: año de fundación, número de socios, cómo hacerse socio…'
+      'Somos el Motorclub Sierra Las Villas, un club motero de Villacarrillo (Jaén), a las puertas del Parque Natural de las Sierras de Cazorla, Segura y Las Villas.',
+      'El club quedó inscrito oficialmente el 10 de mayo de 1991. Desde entonces nos une la gasolina, el compañerismo y la pasión por las motos: salimos a rodar, organizamos rutas, concentraciones y eventos benéficos y damos a conocer las carreteras de nuestra sierra.',
+      'Hoy somos alrededor de 100 socios y formamos parte de la Federación Andaluza de Motociclismo.'
+    ],
+    // Momentos de la historia del club (año + texto). Se muestran en orden.
+    historia: [
+      ['1991', 'El 10 de mayo queda inscrito oficialmente el Motorclub Sierra Las Villas en Villacarrillo.'],
+      ['2019', 'I Enduro Indoor Ciudad de Villacarrillo (8 de septiembre), en el recinto ferial, con premios en metálico y categorías amateur, senior y pro.'],
+      ['2021', 'Nace el Moto Raid Sierra Las Villas: una ruta por puntos fotográficos de la provincia de Jaén.'],
+      ['2022', 'II Moto Raid, puntuable como 4ª prueba del Trofeo Andaluz de Mototurismo de la FAM.'],
+      ['2023', 'Moto Raid Sierra Las Villas junto al festival PSK Rock, con 120 plazas y salida desde el Paseo del Santo Cristo.'],
+      ['2025', 'Ruta “Paraíso del Agua” en Mogón (8 de junio): ruta en moto, sendero junto al Guadalquivir, paella y barra solidaria.'],
+      ['2026', 'Moto Raid Sierra Las Villas (8 y 9 de mayo): unos 300 km por la sierra con puntos fotográficos.'],
+      ['2027', 'Motor Raid Sierra Las Villas · Desafío de las Presas, con app propia y carnet fotográfico.']
+    ],
+    // Curiosidades. Añadid las que queráis (solo cosas comprobadas).
+    curiosidades: [
+      'El club está inscrito desde 1991: más de tres décadas de motos en Villacarrillo.',
+      'En 2022 Villacarrillo fue punto de sellado de la Rider Andalucía: más de 1.300 motos pasaron por el Parque Municipal.',
+      'Nuestro Moto Raid ha sido puntuable para el Trofeo Andaluz de Mototurismo de la Federación Andaluza de Motociclismo.',
+      'El club escolta y apoya pruebas ciclistas como la Clásica Ciudad de Cazorla y la Marcha Ciclodeportiva Sierra de Las Villas.',
+      'Organizamos eventos solidarios, como comidas para personas desfavorecidas junto al Motoclub Olivo.',
+      'Hemos sorteado entre socios y amigos una moto Café Racer.',
+      'Pedro Linares, piloto del club, aparece en el Cuadro de Honor de la FAM: 3º en el Trofeo Nacional de Cross Country (Senior B 4T).',
+      'Las rutas del raid recorren el Parque Natural de Cazorla, Segura y Las Villas, el espacio protegido más grande de España.'
+      // PENDIENTE de confirmar: organización de una prueba del mundial de motocross (2006/2007)
+    ],
+    // Galería de fotos (la primera sale grande). Fotos en la carpeta club/
+    galeria: [
+      { foto: 'club/concentracion-2.jpg', pie: 'Concentración motera del club' },
+      { foto: 'club/enduro-2.jpg', pie: 'Enduro en Villacarrillo' },
+      { foto: 'club/papanoelada-1.jpg', pie: 'Papanoelada motera' },
+      { foto: 'club/ruta-1.jpg', pie: 'Salida en grupo' },
+      { foto: 'club/enduro-1.jpg', pie: 'También nos gusta el barro' },
+      { foto: 'club/ruta-2.jpg', pie: 'Rodando por la sierra' },
+      { foto: 'club/concentracion-1.jpg', pie: 'Motos de toda Andalucía' }
     ],
     // Eventos y actividades que organiza el club
     actividades: [
       { nombre: 'Motor Raid Sierra Las Villas', texto: 'Nuestra ruta sorpresa por la sierra con carnet de sellado. Edición 2026: 8 y 9 de mayo.' },
       { nombre: 'Rutas del club', texto: 'Una o dos salidas al mes: El Lince, Mar y Montaña, Velefique, Caravaca, Sierra Nevada, The Silent Route, la Alpujarra… (ver apartado Socio).' },
       { nombre: 'Rutas nocturnas', texto: 'En verano, por la Sierra de Cazorla, Segura y Las Villas y por el Condado.' },
-      { nombre: 'Papanoelada motera', texto: 'En diciembre en Villacarrillo: stunt, paseo tradicional, premio a la moto más navideña, música y barra.' }
+      { nombre: 'Papanoelada motera', texto: 'En diciembre en Villacarrillo: stunt, paseo tradicional, premio a la moto más navideña, música y barra.' },
+      { nombre: 'Ruta “Paraíso del Agua”', texto: 'En Mogón: ruta libre por la sierra, sendero junto al Guadalquivir, paella y barra solidaria.' },
+      { nombre: 'Colaboraciones', texto: 'Escoltas de pruebas ciclistas, eventos benéficos y apoyo a otros clubes de la zona.' }
     ]
   },
 
