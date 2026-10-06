@@ -8,7 +8,7 @@
 
   var C = window.CONFIG;
   var R = C.ruta;
-  var VERSION_APP = '2.8.1';
+  var VERSION_APP = '2.9.1';
   var CLAVE = 'mcslv_estado_v2';
   var TOTAL = 0; // nº de puntos de la ruta cargada (ver aplicarRuta)
 
@@ -24,10 +24,21 @@
   function normalizarDni(t) { return String(t || '').toUpperCase().replace(/[^0-9A-Z]/g, ''); }
   function dniValido(t) {
     var d = normalizarDni(t);
-    if (!/^[XYZ]?\d{7,8}[A-Z]$/.test(d)) return false;
+    if (!/^(\d{8}|[XYZ]\d{7})[A-Z]$/.test(d)) return false;   // DNI: 8 cifras + letra · NIE: X/Y/Z + 7 cifras + letra
     var num = d.replace(/^X/, '0').replace(/^Y/, '1').replace(/^Z/, '2').slice(0, -1);
     return 'TRWAGMYFPDXBNJZSQVHLCKE'.charAt(parseInt(num, 10) % 23) === d.slice(-1);
   }
+  /* Teléfono: móvil/fijo español de 9 cifras (empieza por 6, 7, 8 o 9) o internacional con +prefijo */
+  function telValido(t) {
+    var s = String(t || '').replace(/[\s.\-()]/g, '');
+    return /^[6789]\d{8}$/.test(s) || /^(\+|00)\d{8,15}$/.test(s);
+  }
+  /* Matrícula: entre 4 y 10 letras/números, con al menos una cifra (1234 ABC, J 1234 AB, extranjeras…) */
+  function matriculaValida(t) {
+    var s = String(t || '').toUpperCase().replace(/[\s\-]/g, '');
+    return /^[A-Z0-9]{4,10}$/.test(s) && /\d/.test(s);
+  }
+  function emailValido(t) { return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(String(t || '').trim()); }
   function telBonito(t) { return String(t).replace(/(\d{3})(\d{3})(\d{3})/, '$1 $2 $3'); }
 
   /* ------------------------------------------------------------------
@@ -326,9 +337,9 @@
     return {
       nombre: f.nombre.value.trim(), apellidos: f.apellidos.value.trim(), dni: normalizarDni(f.dni.value),
       telefono: f.telefono.value.trim(), email: f.email.value.trim(), localidad: f.localidad.value.trim(),
-      moto: f.moto.value.trim(), talla: f.talla.value,
+      moto: f.moto.value.trim(), matricula: f.matricula.value.trim().toUpperCase().replace(/\s+/g, ' '), talla: f.talla.value,
       conAcompanante: con,
-      acompNombre: con ? f.acompNombre.value.trim() : '', acompDni: con ? normalizarDni(f.acompDni.value) : '', acompTalla: con ? f.acompTalla.value : '',
+      acompNombre: con ? f.acompNombre.value.trim() : '', acompDni: con ? normalizarDni(f.acompDni.value) : '', acompTelefono: con ? f.acompTelefono.value.trim() : '', acompTalla: con ? f.acompTalla.value : '',
       cenaPiloto: !!(I.cena && I.cena.activa && f.cenaPiloto.checked),
       cenaAcomp: !!(I.cena && I.cena.activa && con && f.cenaAcomp.checked)
     };
@@ -410,18 +421,39 @@
     ev.preventDefault();
     var f = ev.target, d = datosFormulario();
     errorInscripcion('');
-    var faltan = ['nombre', 'apellidos', 'telefono', 'email', 'moto'].filter(function (k) { return !f[k].value.trim(); });
-    if (faltan.length) { errorInscripcion('Rellena todos los datos del piloto.'); return; }
-    if (!f.talla.value) { errorInscripcion('Elige la talla de camiseta del piloto.'); return; }
-    if (!f.email.checkValidity()) { errorInscripcion('El correo electrónico no es correcto.'); return; }
-    if (!dniValido(d.dni)) { errorInscripcion('El DNI/NIE del piloto no es correcto. Revisa números y letra.'); return; }
-    if (d.conAcompanante) {
-      if (!d.acompNombre) { errorInscripcion('Escribe el nombre del acompañante.'); return; }
-      if (!dniValido(d.acompDni)) { errorInscripcion('El DNI/NIE del acompañante no es correcto.'); return; }
-      if (d.acompDni === d.dni) { errorInscripcion('El DNI del acompañante no puede ser el mismo que el del piloto.'); return; }
+    $$('#form-inscripcion .campo-error').forEach(function (e) { e.classList.remove('campo-error'); });
+    // [campo, ¿está bien?, mensaje] — se comprueban en orden y se marca el primero que falle
+    var DNI_MAL = ' no es correcto. Debe ser un DNI (8 números y letra, ej. 12345678Z) o un NIE (X, Y o Z + 7 números y letra), y la letra tiene que corresponder a los números.';
+    var reglas = [
+      ['nombre', d.nombre.length >= 2, 'Escribe el nombre del piloto.'],
+      ['apellidos', d.apellidos.length >= 2, 'Escribe los apellidos del piloto.'],
+      ['dni', dniValido(d.dni), 'El DNI/NIE del piloto' + DNI_MAL],
+      ['telefono', telValido(d.telefono), 'El teléfono del piloto no es correcto (9 cifras, o con prefijo internacional +).'],
+      ['email', emailValido(d.email), 'El correo electrónico no es correcto.'],
+      ['localidad', d.localidad.length >= 2, 'Escribe tu localidad.'],
+      ['moto', d.moto.length >= 2, 'Escribe la marca y el modelo de la moto.'],
+      ['matricula', matriculaValida(d.matricula), 'La matrícula no es correcta (ej. 1234 ABC).'],
+      ['talla', !!d.talla, 'Elige la talla de camiseta del piloto.']
+    ];
+    if (d.conAcompanante) reglas.push(
+      ['acompNombre', d.acompNombre.length >= 3, 'Escribe el nombre y apellidos del acompañante.'],
+      ['acompDni', dniValido(d.acompDni), 'El DNI/NIE del acompañante' + DNI_MAL],
+      ['acompDni', d.acompDni !== d.dni, 'El DNI del acompañante no puede ser el mismo que el del piloto.'],
+      ['acompTelefono', telValido(d.acompTelefono), 'El teléfono del acompañante no es correcto (9 cifras, o con prefijo internacional +).'],
+      ['acompTalla', !!d.acompTalla, 'Elige la talla de camiseta del acompañante.']
+    );
+    reglas.push(
+      ['acepta', f.acepta.checked, 'Tienes que marcar que aceptas las condiciones de participación y responsabilidad.'],
+      ['aceptaDatos', f.aceptaDatos.checked, 'Tienes que marcar que aceptas el tratamiento de datos.']
+    );
+    var mal = reglas.filter(function (r) { return !r[1]; })[0];
+    if (mal) {
+      var campo = f[mal[0]], caja = campo.type === 'checkbox' ? campo.closest('label') : campo;
+      caja.classList.add('campo-error');
+      errorInscripcion(mal[2]);
+      setTimeout(function () { caja.scrollIntoView({ block: 'center' }); if (campo.focus) campo.focus({ preventScroll: true }); }, 50);
+      return;
     }
-    if (!f.acepta.checked) { errorInscripcion('Tienes que aceptar las condiciones de participación y responsabilidad.'); return; }
-    if (!f.aceptaDatos.checked) { errorInscripcion('Tienes que aceptar el tratamiento de datos.'); return; }
     if (estado.inscripciones.some(function (x) { return x.dni === d.dni && x.estado === 'pagada'; })) { errorInscripcion('Ese DNI ya tiene una inscripción pagada.'); return; }
 
     var ins = d;
@@ -720,8 +752,8 @@
 
   /* ---- Mi inscripción ---- */
   function detalleDeLocal(x) {
-    return { piloto: x.nombre + ' ' + x.apellidos, dni: x.dni, telefono: x.telefono, email: x.email, localidad: x.localidad, moto: x.moto, talla: x.talla,
-      conAcompanante: !!x.conAcompanante, acompNombre: x.acompNombre, acompDni: x.acompDni, acompTalla: x.acompTalla,
+    return { piloto: x.nombre + ' ' + x.apellidos, dni: x.dni, telefono: x.telefono, email: x.email, localidad: x.localidad, moto: x.moto, matricula: x.matricula || '', talla: x.talla,
+      conAcompanante: !!x.conAcompanante, acompNombre: x.acompNombre, acompDni: x.acompDni, acompTelefono: x.acompTelefono || '', acompTalla: x.acompTalla,
       cenaPiloto: !!x.cenaPiloto, cenaAcomp: !!x.cenaAcomp, personasCena: (x.cenaPiloto ? 1 : 0) + (x.cenaAcomp ? 1 : 0),
       importe: x.total, metodo: '', fechaPago: '' };
   }
@@ -762,10 +794,11 @@
       '<dt>Correo</dt><dd>' + esc(d.email || '—') + '</dd>' +
       (d.localidad ? '<dt>Localidad</dt><dd>' + esc(d.localidad) + '</dd>' : '') +
       '<dt>Moto</dt><dd>' + esc(d.moto || '—') + '</dd>' +
+      '<dt>Matrícula</dt><dd>' + esc(d.matricula || '—') + '</dd>' +
       '<dt>Talla</dt><dd>' + esc(d.talla || '—') + '</dd>' +
       '<dt>Cena</dt><dd>' + siNo(d.cenaPiloto) + '</dd></dl></div>');
     html.push('<div class="tarjeta"><h3>Acompañante</h3>' + (d.conAcompanante ?
-      '<dl class="datos-lista"><dt>Nombre</dt><dd>' + esc(d.acompNombre) + '</dd><dt>DNI</dt><dd>' + esc(d.acompDni) + '</dd>' +
+      '<dl class="datos-lista"><dt>Nombre</dt><dd>' + esc(d.acompNombre) + '</dd><dt>DNI</dt><dd>' + esc(d.acompDni) + '</dd><dt>Teléfono</dt><dd>' + esc(d.acompTelefono || '—') + '</dd>' +
       '<dt>Talla</dt><dd>' + esc(d.acompTalla || '—') + '</dd><dt>Cena</dt><dd>' + siNo(d.cenaAcomp) + '</dd></dl>'
       : '<p>Vas <b>sin acompañante</b>.</p>') + '</div>');
     if (I2.cena && I2.cena.activa) {

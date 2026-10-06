@@ -60,12 +60,13 @@ var COLS_PART = ['Dorsal', 'Nombre', 'Teléfono', 'Email', 'Alta', 'Sellos', 'Co
 // Columnas de "Solicitudes" (todas, pagadas o no)
 var COLS_SOL = ['Id solicitud', 'Fecha', 'Estado', 'Nombre', 'Apellidos', 'DNI', 'Teléfono', 'Email', 'Localidad', 'Moto', 'Talla',
   'Acompañante', 'Nombre acompañante', 'DNI acompañante', 'Talla acompañante', 'Cena piloto', 'Cena acompañante', 'Importe (€)',
-  'Método de pago', 'Id sesión Stripe', 'Nº inscripción', 'Condiciones aceptadas', 'Id app'];
+  'Método de pago', 'Id sesión Stripe', 'Nº inscripción', 'Condiciones aceptadas', 'Id app',
+  'Matrícula', 'Teléfono acompañante'];   // columnas nuevas siempre al final
 var S = {}; COLS_SOL.forEach(function (c, i) { S[c] = i; });
 // Columnas de "Inscritos" (solo pagados = inscripciones válidas)
 var COLS_INSC = ['Nº / Dorsal', 'Fecha de pago', 'Nombre', 'Apellidos', 'DNI', 'Teléfono', 'Email', 'Localidad', 'Moto', 'Talla',
   'Acompañante', 'Nombre acompañante', 'DNI acompañante', 'Talla acompañante', 'Cena piloto', 'Cena acompañante', 'Personas en la cena',
-  'Importe pagado (€)', 'Método de pago', 'Id solicitud'];
+  'Importe pagado (€)', 'Método de pago', 'Id solicitud', 'Matrícula', 'Teléfono acompañante'];
 // Pestaña "Ruta": una fila por parada. Tipo = SALIDA, PUNTO o LLEGADA (en ese orden).
 var COLS_RUTA = ['Tipo', 'Id (sin espacios)', 'Nombre', 'Lugar', 'Latitud', 'Longitud', 'Pista para la foto', 'Enlace Google Maps del tramo (opcional)'];
 // La ruta REAL no se escribe aquí (este archivo está en GitHub y es público).
@@ -117,6 +118,10 @@ function hoja(nombre, cabeceras) {
     h.appendRow(cabeceras);
     h.setFrozenRows(1);
     h.getRange(1, 1, 1, cabeceras.length).setFontWeight('bold').setBackground('#d7261e').setFontColor('#ffffff');
+  } else if (h.getLastColumn() < cabeceras.length) {
+    // La hoja ya existía con menos columnas: añade las cabeceras nuevas al final
+    var desde = h.getLastColumn() + 1, nuevas = cabeceras.slice(desde - 1);
+    h.getRange(1, desde, 1, nuevas.length).setValues([nuevas]).setFontWeight('bold').setBackground('#d7261e').setFontColor('#ffffff');
   }
   return h;
 }
@@ -142,10 +147,14 @@ function registrar(d) {
 }
 
 // ------------------ Inscripciones y pagos ------------------
+function telValido(t) {
+  var s = String(t || '').replace(/[\s.\-()]/g, '');
+  return /^[6789]\d{8}$/.test(s) || /^(\+|00)\d{8,15}$/.test(s);
+}
 function normalizarDni(t) { return String(t || '').toUpperCase().replace(/[^0-9A-Z]/g, ''); }
 function dniValido(t) {
   var d = normalizarDni(t);
-  if (!/^[XYZ]?\d{7,8}[A-Z]$/.test(d)) return false;
+  if (!/^(\d{8}|[XYZ]\d{7})[A-Z]$/.test(d)) return false;   // DNI: 8 cifras + letra · NIE: X/Y/Z + 7 cifras + letra
   var num = d.replace(/^X/, '0').replace(/^Y/, '1').replace(/^Z/, '2').slice(0, -1);
   return 'TRWAGMYFPDXBNJZSQVHLCKE'.charAt(parseInt(num, 10) % 23) === d.slice(-1);
 }
@@ -179,7 +188,10 @@ function buscarSolicitud(id) {
 /** Nueva solicitud (o reintento de pago de una existente) */
 function solicitar(d) {
   var dni = normalizarDni(d.dni), dniA = normalizarDni(d.acompDni);
-  if (!d.nombre || !d.apellidos || !d.telefono || !d.email) return { ok: false, error: 'Faltan datos del piloto' };
+  if (!d.nombre || !d.apellidos || !d.telefono || !d.email || !d.localidad || !d.moto || !d.matricula || !d.talla) return { ok: false, error: 'Faltan datos del piloto' };
+  if (!telValido(d.telefono)) return { ok: false, error: 'El teléfono del piloto no es válido' };
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(String(d.email).trim())) return { ok: false, error: 'El correo no es válido' };
+  if (d.conAcompanante && (!d.acompNombre || !d.acompTalla || !telValido(d.acompTelefono))) return { ok: false, error: 'Faltan datos del acompañante' };
   if (!dniValido(dni)) return { ok: false, error: 'El DNI del piloto no es válido' };
   if (d.conAcompanante && !dniValido(dniA)) return { ok: false, error: 'El DNI del acompañante no es válido' };
   if (!d.aceptaCondiciones) return { ok: false, error: 'Hay que aceptar las condiciones' };
@@ -199,7 +211,8 @@ function solicitar(d) {
     id = 'S' + Utilities.formatDate(new Date(), 'Europe/Madrid', 'yyMMddHHmmss') + Math.floor(Math.random() * 90 + 10);
     h.appendRow([id, new Date(), 'PENDIENTE DE PAGO', d.nombre, d.apellidos, dni, d.telefono, d.email, d.localidad || '', d.moto || '', d.talla || '',
       d.conAcompanante ? 'SÍ' : 'NO', d.acompNombre || '', dniA, d.acompTalla || '', d.cenaPiloto ? 'SÍ' : 'NO', (d.conAcompanante && d.cenaAcomp) ? 'SÍ' : 'NO',
-      total, '', '', '', d.aceptaCondiciones, d.idLocal || '']);
+      total, '', '', '', d.aceptaCondiciones, d.idLocal || '',
+      String(d.matricula || '').toUpperCase(), d.conAcompanante ? (d.acompTelefono || '') : '']);
     sol = buscarSolicitud(id);
   }
   var url = null;
@@ -238,7 +251,7 @@ function confirmarPago(sol, metodo) {
   var personasCena = (si(v[S['Cena piloto']]) ? 1 : 0) + (si(v[S['Cena acompañante']]) ? 1 : 0);
   hi.appendRow([numero, new Date(), v[S['Nombre']], v[S['Apellidos']], v[S['DNI']], v[S['Teléfono']], v[S['Email']], v[S['Localidad']], v[S['Moto']], v[S['Talla']],
     v[S['Acompañante']], v[S['Nombre acompañante']], v[S['DNI acompañante']], v[S['Talla acompañante']], v[S['Cena piloto']], v[S['Cena acompañante']], personasCena,
-    v[S['Importe (€)']], metodo, v[S['Id solicitud']]]);
+    v[S['Importe (€)']], metodo, v[S['Id solicitud']], v[S['Matrícula']] || '', v[S['Teléfono acompañante']] || '']);
   h.getRange(sol.fila, S['Estado'] + 1).setValue('PAGADA');
   h.getRange(sol.fila, S['Método de pago'] + 1).setValue(metodo);
   h.getRange(sol.fila, S['Nº inscripción'] + 1).setValue(numero);
@@ -271,10 +284,10 @@ function correoConfirmacion(v, numero, personasCena, metodo) {
         '<div style="color:' + rojo + ';font-weight:bold;font-size:13px;letter-spacing:2px">DORSAL</div><div style="font-size:48px;font-weight:bold;line-height:1">' + dorsal + '</div></div></div>' +
       titulo('Piloto') + tabla([
         fila('Nombre', v[S['Nombre']] + ' ' + v[S['Apellidos']]), fila('DNI', v[S['DNI']]), fila('Teléfono', v[S['Teléfono']]),
-        fila('Correo', v[S['Email']]), fila('Localidad', v[S['Localidad']] || '—'), fila('Moto', v[S['Moto']] || '—'),
+        fila('Correo', v[S['Email']]), fila('Localidad', v[S['Localidad']] || '—'), fila('Moto', v[S['Moto']] || '—'), fila('Matrícula', v[S['Matrícula']] || '—'),
         fila('Talla de camiseta', v[S['Talla']] || '—'), fila('Cena de recepción', si(v[S['Cena piloto']]) ? 'Sí' : 'No')]) +
       titulo('Acompañante') + (conA ? tabla([
-        fila('Nombre', v[S['Nombre acompañante']]), fila('DNI', v[S['DNI acompañante']]), fila('Talla de camiseta', v[S['Talla acompañante']] || '—'),
+        fila('Nombre', v[S['Nombre acompañante']]), fila('DNI', v[S['DNI acompañante']]), fila('Teléfono', v[S['Teléfono acompañante']] || '—'), fila('Talla de camiseta', v[S['Talla acompañante']] || '—'),
         fila('Cena de recepción', si(v[S['Cena acompañante']]) ? 'Sí' : 'No')]) : '<p>Sin acompañante.</p>') +
       titulo('Pago') + tabla(l.map(function (x) { return fila(x[0], x[1] + ' €'); }).concat([
         '<tr><td style="padding:10px;font-weight:bold;font-size:17px">TOTAL PAGADO</td><td style="padding:10px;font-weight:bold;font-size:20px;color:' + rojo + '">' + limpiar(v[S['Importe (€)']]) + ' €</td></tr>',
@@ -300,8 +313,8 @@ function avisarInscripcion(v, numero, personasCena, metodo) {
       to: AJUSTES.CORREO_CLUB,
       subject: '✅ Inscripción pagada Nº ' + numero + ': ' + quien,
       htmlBody: '<p><b>' + limpiar(quien) + '</b> · DNI ' + limpiar(v[S['DNI']]) + ' · ' + limpiar(v[S['Teléfono']]) + ' · ' + limpiar(v[S['Email']]) + '</p>' +
-        '<p>Moto: ' + limpiar(v[S['Moto']]) + ' · Talla ' + limpiar(v[S['Talla']]) +
-        (si(v[S['Acompañante']]) ? '<br>Acompañante: ' + limpiar(v[S['Nombre acompañante']]) + ' · DNI ' + limpiar(v[S['DNI acompañante']]) + ' · Talla ' + limpiar(v[S['Talla acompañante']]) : '') +
+        '<p>Moto: ' + limpiar(v[S['Moto']]) + ' · Matrícula ' + limpiar(v[S['Matrícula']] || '—') + ' · Talla ' + limpiar(v[S['Talla']]) +
+        (si(v[S['Acompañante']]) ? '<br>Acompañante: ' + limpiar(v[S['Nombre acompañante']]) + ' · DNI ' + limpiar(v[S['DNI acompañante']]) + ' · Tel. ' + limpiar(v[S['Teléfono acompañante']] || '—') + ' · Talla ' + limpiar(v[S['Talla acompañante']]) : '') +
         '<br>Cena de recepción: ' + personasCena + ' persona(s)</p><p>Pagado: <b>' + limpiar(v[S['Importe (€)']]) + ' €</b> (' + limpiar(metodo) + ')</p>',
       name: 'App Motorclub Sierra Las Villas'
     });
@@ -334,8 +347,8 @@ function acceso(d) {
     // Datos completos para el apartado "Mi inscripción" de la app
     detalle: {
       piloto: (v[2] + ' ' + v[3]).trim(), dni: String(v[4] || ''), telefono: String(v[5] || ''), email: String(v[6] || ''),
-      localidad: String(v[7] || ''), moto: String(v[8] || ''), talla: String(v[9] || ''),
-      conAcompanante: si(v[10]), acompNombre: String(v[11] || ''), acompDni: String(v[12] || ''), acompTalla: String(v[13] || ''),
+      localidad: String(v[7] || ''), moto: String(v[8] || ''), matricula: String(v[20] || ''), talla: String(v[9] || ''),
+      conAcompanante: si(v[10]), acompNombre: String(v[11] || ''), acompDni: String(v[12] || ''), acompTelefono: String(v[21] || ''), acompTalla: String(v[13] || ''),
       cenaPiloto: si(v[14]), cenaAcomp: si(v[15]), personasCena: Number(v[16]) || 0,
       importe: Number(v[17]) || 0, metodo: String(v[18] || ''), fechaPago: fecha
     }

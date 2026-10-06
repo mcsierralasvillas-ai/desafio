@@ -16,7 +16,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anton&family=Barlow+Condensed:ital,wght@0,500;0,700;1,700;1,800&family=Barlow:wght@400;600;700&display=swap" media="print" onload="this.media='all'">
-  <link rel="stylesheet" href="css/app.css?v=2.8.1">
+  <link rel="stylesheet" href="css/app.css?v=2.9.1">
 </head>
 <body>
 
@@ -102,8 +102,9 @@
         <label>DNI / NIE <span class="suave">(con él entrarás en la ruta)</span><input name="dni" required autocapitalize="characters" autocomplete="off" placeholder="12345678Z"></label>
         <label>Teléfono<input name="telefono" type="tel" required inputmode="tel" autocomplete="tel"></label>
         <label>Correo electrónico<input name="email" type="email" required autocomplete="email"></label>
-        <label>Localidad<input name="localidad" autocomplete="address-level2"></label>
+        <label>Localidad<input name="localidad" required autocomplete="address-level2"></label>
         <label>Moto (marca y modelo)<input name="moto" required placeholder="Ej.: Yamaha Tracer 9"></label>
+        <label>Matrícula de la moto<input name="matricula" required autocapitalize="characters" autocomplete="off" placeholder="Ej.: 1234 ABC"></label>
         <label>Talla de camiseta<select name="talla" required></select></label>
 
         <h3 class="seccion">Acompañante</h3>
@@ -111,11 +112,12 @@
         <div id="bloque-acompanante" hidden>
           <label>Nombre y apellidos del acompañante<input name="acompNombre"></label>
           <label>DNI / NIE del acompañante<input name="acompDni" autocapitalize="characters" autocomplete="off" placeholder="12345678Z"></label>
+          <label>Teléfono del acompañante<input name="acompTelefono" type="tel" inputmode="tel" autocomplete="off"></label>
           <label>Talla de camiseta del acompañante<select name="acompTalla"></select></label>
         </div>
 
-        <div id="bloque-cena">
-          <h3 class="seccion">Gran cena de recepción</h3>
+        <div id="bloque-cena" class="bloque-cena">
+          <h3 class="cena-titulo"><span class="cena-icono" aria-hidden="true">🍽️</span> Gran cena de recepción</h3>
           <div class="cena-aviso" id="cena-texto"></div>
           <label class="casilla"><input type="checkbox" name="cenaPiloto" id="cena-piloto"> <span>El piloto viene a la cena (+<span class="precio-cena"></span>)</span></label>
           <label class="casilla" id="fila-cena-acomp" hidden><input type="checkbox" name="cenaAcomp" id="cena-acomp"> <span>El acompañante viene a la cena (+<span class="precio-cena"></span>)</span></label>
@@ -495,7 +497,7 @@
   </div>
   <div class="toast" id="toast" hidden></div>
 
-  <script src="js/config.js?v=2.8.1"></script>
-  <script src="js/app.js?v=2.8.1"></script>
+  <script src="js/config.js?v=2.9.1"></script>
+  <script src="js/app.js?v=2.9.1"></script>
 </body>
 </html>

@@ -368,3 +368,15 @@ label.casilla input { width: 22px; height: 22px; margin: 1px 0 0; accent-color: 
 .guia-texto p { margin: 0 0 12px; color: #ddd; line-height: 1.45; }
 .guia-num { float: left; width: 34px; height: 34px; margin: 0 10px 4px 0; border-radius: 50%; background: var(--amarillo); color: #111; font-weight: 900; font-size: 18px; display: flex; align-items: center; justify-content: center; }
 .guia-paso img { display: block; width: 72%; max-width: 300px; margin: 0 auto; border-radius: 18px; border: 3px solid #333; box-shadow: 0 6px 18px rgba(0,0,0,.5); }
+
+/* ---- Cena destacada (v2.9) ---- */
+.bloque-cena { margin: 22px 0 8px; padding: 16px 14px 10px; border-radius: 14px; border: 2px solid var(--amarillo);
+  background: linear-gradient(160deg, rgba(255,212,0,.16), rgba(227,6,11,.14) 60%, rgba(0,0,0,.2)); box-shadow: 0 4px 0 var(--rojo); }
+.cena-titulo { display: flex; align-items: center; gap: 10px; margin: 0 0 12px; font-size: 24px; line-height: 1.1; color: var(--amarillo); text-transform: uppercase; letter-spacing: .02em; }
+.cena-icono { flex: none; width: 46px; height: 46px; border-radius: 50%; background: var(--amarillo); display: flex; align-items: center; justify-content: center; font-size: 26px; box-shadow: 0 0 0 3px var(--rojo); }
+.bloque-cena .cena-aviso { font-size: 16px; background: rgba(0,0,0,.35); }
+.bloque-cena .casilla span { font-size: 17px; font-weight: 700; }
+
+/* ---- Campo con error (v2.9.1) ---- */
+#form-inscripcion .campo-error { border-color: var(--rojo) !important; box-shadow: 0 0 0 3px rgba(227,6,11,.45) !important; }
+#form-inscripcion label.campo-error { border: 2px solid var(--rojo); border-radius: 8px; padding: 6px; }
