@@ -380,3 +380,8 @@ label.casilla input { width: 22px; height: 22px; margin: 1px 0 0; accent-color: 
 /* ---- Campo con error (v2.9.1) ---- */
 #form-inscripcion .campo-error { border-color: var(--rojo) !important; box-shadow: 0 0 0 3px rgba(227,6,11,.45) !important; }
 #form-inscripcion label.campo-error { border: 2px solid var(--rojo); border-radius: 8px; padding: 6px; }
+
+/* ---- Logo del evento en RAID 2027 (v2.10) ---- */
+.barra-logo.barra-logo-raid { width: 104px; filter: drop-shadow(0 0 2px rgba(0,0,0,.8)); }
+.raid-logo.logo-evento { width: min(86vw, 360px); filter: drop-shadow(0 4px 14px rgba(0,0,0,.7)) drop-shadow(0 0 22px rgba(255,212,0,.18)); }
+body.en-raid .barra { grid-template-columns: 48px 1fr 104px; }

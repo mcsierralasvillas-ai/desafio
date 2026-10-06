@@ -8,7 +8,7 @@
 
   var C = window.CONFIG;
   var R = C.ruta;
-  var VERSION_APP = '2.9.1';
+  var VERSION_APP = '2.10.0';
   var CLAVE = 'mcslv_estado_v2';
   var TOTAL = 0; // nº de puntos de la ruta cargada (ver aplicarRuta)
 
@@ -171,6 +171,14 @@
     $$('.pantalla').forEach(function (s) { s.hidden = s.id !== 'p-' + nombre; });
     $('#barra').hidden = nombre === 'inicio';
     $('#barra-titulo').textContent = PANTALLAS[nombre].titulo;
+    // Dentro de RAID 2027 (y sus submenús) se ve el logo del evento; en el resto, el del club
+    var p = nombre, enRaid = false;
+    while (p) { if (p === 'raid') { enRaid = true; break; } p = PANTALLAS[p].padre; }
+    var bl = $('#barra-logo');
+    bl.src = enRaid ? 'icons/logo-raid-barra.png' : 'icons/logo.png';
+    bl.alt = enRaid ? 'Moto Raid Sierra Las Villas' : 'Motorclub Sierra Las Villas';
+    bl.classList.toggle('barra-logo-raid', enRaid);
+    document.body.classList.toggle('en-raid', enRaid);
     if (!sinHistorial && location.hash !== '#' + nombre) history.pushState(null, '', '#' + nombre);
     window.scrollTo(0, 0);
     pintar();
@@ -648,7 +656,7 @@
     $('#ficha-extra').textContent = [p.moto, p.acompanante ? 'Acompañante: ' + p.acompanante : '', p.telefono].filter(Boolean).join(' · ');
     $('#ficha-dorsal').textContent = dorsalTexto(p.dorsal);
     $('#demo-aviso').hidden = !esDemo();
-    $('#ruta-logo').src = R.logo || 'icons/logo.png';
+    $('#ruta-logo').src = R.logo || 'icons/logo-raid.png';
     $('#ruta-reto').textContent = C.evento.reto;
     aplicarRuta();
     var n = numSellos(), desbloq = rutaDesbloqueada(), lista = desbloq && hayRuta();

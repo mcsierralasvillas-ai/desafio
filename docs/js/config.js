@@ -196,7 +196,7 @@ window.CONFIG = {
 
     // Logo que sale en el menú de la ruta (cuando tengáis el del Motor Raid,
     // ponedlo en icons/ y cambiad el nombre aquí)
-    logo: 'icons/logo.png',
+    logo: 'icons/logo-raid.png',
     mapa: {
       teselas: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
       atribucion: '&copy; colaboradores de OpenStreetMap',

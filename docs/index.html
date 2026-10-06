@@ -16,7 +16,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anton&family=Barlow+Condensed:ital,wght@0,500;0,700;1,700;1,800&family=Barlow:wght@400;600;700&display=swap" media="print" onload="this.media='all'">
-  <link rel="stylesheet" href="css/app.css?v=2.9.1">
+  <link rel="stylesheet" href="css/app.css?v=2.10.0">
 </head>
 <body>
 
@@ -24,7 +24,7 @@
   <header class="barra" id="barra" hidden>
     <button class="barra-atras" id="boton-atras" aria-label="Volver">‹</button>
     <div class="barra-titulo" id="barra-titulo"></div>
-    <img src="icons/logo.png" alt="Motorclub Sierra Las Villas" class="barra-logo" data-ir="inicio">
+    <img src="icons/logo.png" alt="Motorclub Sierra Las Villas" class="barra-logo" id="barra-logo" data-ir="inicio">
   </header>
   <div class="aviso-prueba" id="aviso-prueba" hidden>MODO PRUEBA · no usar en el evento</div>
 
@@ -58,7 +58,7 @@
     <!-- ================= RAID 2027 (submenú) ================= -->
     <section class="pantalla" id="p-raid" hidden>
       <div class="raid-cabecera">
-        <img src="icons/logo.png" alt="" class="raid-logo">
+        <img src="icons/logo-raid.png" alt="Moto Raid Sierra Las Villas" class="raid-logo logo-evento">
         <div class="raid-nombre" id="raid-nombre"></div>
         <div class="raid-reto" id="raid-reto"></div>
         <div class="raid-fechas" id="raid-fechas"></div>
@@ -186,7 +186,7 @@
         <div class="demo-aviso" id="demo-aviso" hidden>Usuario de demostración · datos ficticios</div>
 
         <div class="raid-cabecera">
-          <img src="icons/logo.png" alt="Motor Raid Sierra Las Villas" class="raid-logo" id="ruta-logo">
+          <img src="icons/logo-raid.png" alt="Moto Raid Sierra Las Villas" class="raid-logo logo-evento" id="ruta-logo">
           <div class="raid-reto" id="ruta-reto"></div>
           <div class="progreso-linea"><div id="home-progreso"></div></div>
           <div class="suave" id="home-progreso-texto"></div>
@@ -497,7 +497,7 @@
   </div>
   <div class="toast" id="toast" hidden></div>
 
-  <script src="js/config.js?v=2.9.1"></script>
-  <script src="js/app.js?v=2.9.1"></script>
+  <script src="js/config.js?v=2.10.0"></script>
+  <script src="js/app.js?v=2.10.0"></script>
 </body>
 </html>
